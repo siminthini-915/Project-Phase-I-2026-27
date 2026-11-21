@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz Attempt | EduCore</title>
+
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  >
+
+  <style>
+    body {
+      background: #f5f7fb;
+      color: #212529;
+    }
+
+    .container {
+      max-width: 1000px;
+    }
+
+    .panel,
+    .quiz-card,
+    .question-card {
+      background: #fff;
+      border: 1px solid #e1e5ee;
+      border-radius: 14px;
+      padding: 22px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    }
+
+    .quiz-card {
+      height: 100%;
+    }
+
+    .question-card {
+      margin-bottom: 16px;
+      box-shadow: none;
+    }
+
+    .page-title {
+      font-weight: 750;
+    }
+
+    .muted {
+      color: #6c757d;
+      font-size: 13px;
+    }
+
+    .form-check {
+      padding: 10px 12px 10px 36px;
+      border: 1px solid #e1e5ee;
+      border-radius: 9px;
+      margin-top: 8px;
+    }
+
+    .form-check-input {
+      margin-top: 5px;
+    }
+
+    /* Light pastel green for correct answers */
+    .answer-correct {
+      background-color: #edf7ee;
+      border: 1px solid #d4ead7;
+      border-left: 5px solid #8fca98;
+      color: #243b2a;
+    }
+
+    /* Light pastel red for incorrect answers */
+    .answer-incorrect {
+      background-color: #fdf0f0;
+      border: 1px solid #f3d6d6;
+      border-left: 5px solid #e6a0a0;
+      color: #4a2929;
+    }
+
+    .answer-correct h6,
+    .answer-correct p,
+    .answer-incorrect h6,
+    .answer-incorrect p {
+      color: #263238;
+    }
+
+    /* Correct answer label */
+    .answer-correct .status-correct {
+      display: inline-block;
+      padding: 5px 12px;
+      border-radius: 6px;
+      background: #d7ecd9;
+      color: #245b2b;
+      font-weight: 600;
+    }
+
+    /* Incorrect answer label */
+    .answer-incorrect .status-incorrect {
+      display: inline-block;
+      padding: 5px 12px;
+      border-radius: 6px;
+      background: #f5dada;
+      color: #842f35;
+      font-weight: 600;
+    }
+
+    /* Performance feedback box */
+    .performance-box {
+      border-radius: 12px;
+      padding: 18px 20px;
+      border: 1px solid transparent;
+      margin-top: 16px;
+      margin-bottom: 18px;
+    }
+
+    /* Excellent: pastel green */
+    .performance-excellent {
+      background: #edf7ee;
+      border-color: #d4ead7;
+      color: #245b2b;
+    }
+
+    /* Strong: soft pastel blue */
+    .performance-strong {
+      background: #eef4fc;
+      border-color: #d7e4f5;
+      color: #24476d;
+    }
+
+    /* Average: soft pastel yellow */
+    .performance-average {
+      background: #fff7e8;
+      border-color: #f3e4c5;
+      color: #70521d;
+    }
+
+    /* Low: soft pastel red */
+    .performance-low {
+      background: #fdf0f0;
+      border-color: #f3d6d6;
+      color: #842f35;
+    }
+
+    .performance-box strong {
+      font-size: 17px;
+    }
+
+    .performance-box p {
+      color: inherit;
+    }
+
+    #message:empty {
+      display: none;
+    }
+
+    @media (max-width: 576px) {
+      .panel,
+      .quiz-card,
+      .question-card {
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="container py-4">
+    <a href="student-quizzes.html" class="btn btn-outline-secondary mb-3">
+      &larr; Back to Quizzes
+    </a>
+
+    <h2 class="page-title">Quiz</h2>
+    <p class="text-secondary">
+      Submit your answers once. Your score and answer review will be saved.
+    </p>
+
+    <div id="message" aria-live="polite"></div>
+
+    <section id="quizListSection" class="panel" hidden>
+      <h4 class="fw-bold mb-3">Your Quizzes</h4>
+      <div id="quizList" class="row g-3">
+        <p class="text-secondary">Loading quizzes...</p>
+      </div>
+    </section>
+
+    <section id="quizArea" class="mt-4"></section>
+  </main>
+
+  <script type="module">
+    import { auth, db } from "./firebase.js";
+
+    import {
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js";
+
+    import {
+      collection,
+      getDoc,
+      getDocs,
+      doc,
+      query,
+      where,
+      runTransaction,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
+
+    const $ = id => document.getElementById(id);
+
+    const messageEl = $("message");
+    const quizList = $("quizList");
+    const quizArea = $("quizArea");
+    const quizListSection = $("quizListSection");
+
+    let currentUser = null;
+    let studentName = "Student";
+    let quizzes = [];
+    let attemptsByQuiz = new Map();
+    let submitting = false;
+
+    function showMessage(message, type = "danger") {
+      messageEl.replaceChildren();
+
+      const alert = document.createElement("div");
+      alert.className = `alert alert-${type}`;
+      alert.textContent = message;
+
+      messageEl.appendChild(alert);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function clearMessage() {
+      messageEl.replaceChildren();
+    }
+
+    function formatDate(value) {
+      let date = null;
+
+      if (value?.toDate) {
+        date = value.toDate();
+      } else if (value instanceof Date) {
+        date = value;
+      } else if (value) {
+        date = new Date(value);
+      }
+
+      if (!date || Number.isNaN(date.getTime())) {
+        return "Date not available";
+      }
+
+      return date.toLocaleString();
+    }
+
+// ADD THIS BELOW
+function isQuizExpired(quiz) {
+  if (!quiz.deadline) return false;
+
+  const deadline = new Date(quiz.deadline);
+
+  if (Number.isNaN(deadline.getTime())) return false;
+
+  return Date.now() >= deadline.getTime();
+}
+
+    function getQuestionMarks(question, quiz) {
+      const marks = Number(question.marks ?? quiz.marksPerQuestion ?? 1);
+      return Number.isFinite(marks) && marks > 0 ? marks : 1;
+    }
+
+    function getTotalMarks(questions, quiz) {
+      return questions.reduce(
+        (total, question) => total + getQuestionMarks(question, quiz),
+        0
+      );
+    }
+
+    function getPercentage(score, totalMarks) {
+      return totalMarks > 0
+        ? Math.round((score / totalMarks) * 100)
+        : 0;
+    }
+
+    // Below 30% = Low
+    // 30% to below 60% = Average
+    // 60% to below 90% = Strong
+    // 90% and above = Excellent
+    function getPerformanceFeedback(percentage) {
+      if (percentage < 30) {
+        return {
+          title: "Low Performance",
+          className: "performance-low",
+          message:
+            "Don't feel discouraged. Every attempt is a learning opportunity!"
+        };
+      }
+
+      if (percentage < 60) {
+        return {
+          title: "Average Performance",
+          className: "performance-average",
+          message:
+            "Good effort! Review the incorrect answers and try to improve!"
+        };
+      }
+
+      if (percentage < 90) {
+        return {
+          title: "Strong Performance",
+          className: "performance-strong",
+          message:
+            "Great job! You're making strong progress. Keep learning and improving!"
+        };
+      }
+
+      return {
+        title: "Excellent Performance",
+        className: "performance-excellent",
+        message:
+          "Hurray! Outstanding work! You've mastered this quiz. Keep it up!"
+      };
+    }
+
+    function getRevisionTopics(questions, answers, quizTopic) {
+      const topics = new Set();
+
+      questions.forEach((question, index) => {
+        const selected = answers[index];
+        const correct = Number(question.correctIndex);
+
+        if (selected === undefined || Number(selected) !== correct) {
+          const topic = String(
+            question.topic || quizTopic || "General Topic"
+          ).trim();
+
+          if (topic) topics.add(topic);
+        }
+      });
+
+      return [...topics];
+    }
+
+    function getStableAttemptId(userId, quizId) {
+      return `${userId}_${quizId}`;
+    }
+
+    async function loadStudentData() {
+      const userSnap = await getDoc(doc(db, "users", currentUser.uid));
+
+      if (!userSnap.exists() || userSnap.data().role !== "student") {
+        location.href = "login.html";
+        return;
+      }
+
+      const userData = userSnap.data();
+
+      studentName =
+        userData.name ||
+        userData.fullName ||
+        currentUser.displayName ||
+        currentUser.email ||
+        "Student";
+
+      await loadQuizzesAndAttempts();
+    }
+
+    async function loadQuizzesAndAttempts() {
+      quizList.replaceChildren();
+
+      const loading = document.createElement("p");
+      loading.className = "text-secondary";
+      loading.textContent = "Loading quizzes...";
+      quizList.appendChild(loading);
+
+      try {
+  const [
+    attemptSnapshot,
+    userEnrollmentSnapshot,
+    allEnrollmentSnapshot
+  ] = await Promise.all([
+    getDocs(query(
+      collection(db, "quizAttempts"),
+      where("studentId", "==", currentUser.uid)
+    )),
+    getDocs(collection(db, "users", currentUser.uid, "enrollments")),
+    getDocs(query(
+      collection(db, "enrollments"),
+      where("studentId", "==", currentUser.uid)
+    ))
+  ]);
+
+  // Collect enrolled course IDs
+  const enrolledCourseIds = new Set();
+
+  userEnrollmentSnapshot.docs.forEach(item => {
+    enrolledCourseIds.add(item.id);
+  });
+
+  allEnrollmentSnapshot.docs.forEach(item => {
+    const enrollment = item.data();
+    if (enrollment.courseId) {
+      enrolledCourseIds.add(enrollment.courseId);
+    }
+  });
+
+  // Fetch published quizzes only from enrolled courses
+  const quizSnapshots = await Promise.all(
+    [...enrolledCourseIds].map(courseId =>
+      getDocs(query(
+        collection(db, "quizzes"),
+        where("published", "==", true),
+        where("courseId", "==", courseId)
+      ))
+    )
+  );
+
+  const quizDocs = quizSnapshots.flatMap(snapshot => snapshot.docs);
+
+  quizzes = quizDocs
+    .map(item => ({ id: item.id, ...item.data() }))
+    .filter(quiz =>
+      quiz.published === true &&
+      Array.isArray(quiz.questions) &&
+      quiz.questions.length > 0 &&
+      enrolledCourseIds.has(quiz.courseId)
+    )
+    .sort((a, b) =>
+      String(a.title || "").localeCompare(String(b.title || ""))
+    );
+
+  attemptsByQuiz = new Map();
+
+// Keep attempts separately for each quiz version.
+attemptSnapshot.docs.forEach(item => {
+  const attempt = { id: item.id, ...item.data() };
+
+  if (!attempt.quizId) return;
+
+  const version = attempt.version || 1;
+  const key = `${attempt.quizId}_${version}`;
+
+  const previous = attemptsByQuiz.get(key);
+  const currentTime = attempt.submittedAt?.toMillis?.() || 0;
+  const previousTime = previous?.submittedAt?.toMillis?.() || 0;
+
+  if (!previous || currentTime >= previousTime) {
+    attemptsByQuiz.set(key, attempt);
+  }
+});
+
+        // Explicitly check the stable attempt document as well.
+        for (const quiz of quizzes) {
+          if (attemptsByQuiz.has(quiz.id)) continue;
+
+          const quizVersion = quiz.version || 1;
+const stableId = getStableAttemptId(currentUser.uid, `${quiz.id}_v${quizVersion}`);
+          const attemptSnap = await getDoc(
+            doc(db, "quizAttempts", stableId)
+          );
+
+          if (attemptSnap.exists()) {
+            attemptsByQuiz.set(quiz.id, {
+              id: attemptSnap.id,
+              ...attemptSnap.data()
+            });
+          }
+        }
+
+        renderQuizList();
+      } catch (error) {
+        console.error("Loading quizzes failed:", error);
+        quizList.replaceChildren();
+
+        const errorText = document.createElement("p");
+        errorText.className = "text-danger";
+        errorText.textContent =
+          "Could not load quizzes. Check your Firestore rules and connection.";
+
+        quizList.appendChild(errorText);
+      }
+    }
+
+    function renderQuizList() {
+      quizList.replaceChildren();
+
+      if (quizzes.length === 0) {
+        const empty = document.createElement("p");
+        empty.className = "text-secondary mb-0";
+        empty.textContent = "No published quizzes are available yet.";
+        quizList.appendChild(empty);
+        return;
+      }
+
+      quizzes.forEach(quiz => {
+        const column = document.createElement("div");
+        column.className = "col-12 col-md-6";
+
+        const card = document.createElement("div");
+        card.className = "quiz-card";
+
+        const title = document.createElement("h5");
+        title.className = "fw-bold";
+        title.textContent = quiz.title || "Untitled Quiz";
+
+        const course = document.createElement("p");
+        course.className = "mb-1";
+        course.textContent =
+          `Course: ${quiz.courseName || "Not specified"}`;
+
+        const topic = document.createElement("p");
+        topic.className = "mb-1";
+        topic.textContent =
+          `Topic: ${quiz.topic || "Not specified"}`;
+
+        const count = document.createElement("p");
+        count.className = "mb-1";
+        count.textContent = `Questions: ${quiz.questions.length}`;
+
+        const total = getTotalMarks(quiz.questions, quiz);
+        const marks = document.createElement("p");
+        marks.className = "mb-3";
+        marks.textContent = `Total marks: ${total}`;
+
+        const attempt = attemptsByQuiz.get(`${quiz.id}_${quiz.version || 1}`);
+        const button = document.createElement("button");
+
+        button.type = "button";
+        button.className = attempt
+          ? "btn btn-outline-primary"
+          : "btn btn-primary";
+
+        button.textContent = attempt ? "View Score" : "Start Quiz";
+        button.addEventListener("click", () => {
+          location.href =
+            `student-quiz.html?quizId=${encodeURIComponent(quiz.id)}`;
+        });
+
+        const status = document.createElement("span");
+        status.className = attempt
+          ? "badge text-bg-success ms-2"
+          : "badge text-bg-secondary ms-2";
+
+        status.textContent = attempt ? "Attempted" : "Not Attempted";
+
+        card.append(title, course, topic, count, marks, button, status);
+        column.appendChild(card);
+        quizList.appendChild(column);
+      });
+    }
+
+    function startQuiz(quiz) {
+      clearMessage();
+
+      if (attemptsByQuiz.has(quiz.id)) {
+        showResult(quiz, attemptsByQuiz.get(quiz.id));
+        return;
+      }
+if (isQuizExpired(quiz)) {
+  showMessage(
+    "This quiz has expired. You can no longer attempt it.",
+    "warning"
+  );
+  return;
+}
+      if (!Array.isArray(quiz.questions) || quiz.questions.length === 0) {
+        showMessage("This quiz has no questions available.", "warning");
+        return;
+      }
+
+      renderQuizForm(quiz);
+    }
+
+    function downloadQuestionSheet(quiz, questions = quiz.questions) {
+      const lines = [
+        `EduCore - ${quiz.title || "Quiz"}`,
+        `Course: ${quiz.courseName || "Not specified"}`,
+        `Topic: ${quiz.topic || "Not specified"}`,
+        "",
+        "QUESTIONS AND OPTIONS",
+        "Correct answers are not included in this question sheet.",
+        ""
+      ];
+
+      questions.forEach((question, index) => {
+        lines.push(`${index + 1}. ${question.text || "Question"}`);
+
+        (question.options || []).forEach((option, optionIndex) => {
+          lines.push(
+            `   ${String.fromCharCode(65 + optionIndex)}. ${option}`
+          );
+        });
+
+        lines.push("");
+      });
+
+      const blob = new Blob(
+        [lines.join("\n")],
+        { type: "text/plain;charset=utf-8" }
+      );
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      const filename = (quiz.title || "quiz")
+        .replace(/[^a-z0-9-_ ]/gi, "")
+        .trim()
+        .replace(/\s+/g, "_") || "quiz";
+
+      link.href = url;
+      link.download = `${filename}_questions.txt`;
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function renderQuizForm(quiz) {
+      clearMessage();
+      quizListSection.hidden = true;
+      quizArea.replaceChildren();
+
+      const panel = document.createElement("div");
+      panel.className = "panel";
+
+      const heading = document.createElement("h3");
+      heading.className = "fw-bold";
+      heading.textContent = quiz.title || "Quiz";
+
+      const details = document.createElement("p");
+      details.className = "text-secondary";
+      details.textContent =
+        `Course: ${quiz.courseName || "Not specified"} | ` +
+        `Topic: ${quiz.topic || "Not specified"} | ` +
+        `Total marks: ${getTotalMarks(quiz.questions, quiz)}`;
+
+      const note = document.createElement("div");
+      note.className = "alert alert-info";
+      note.textContent =
+        "You can submit this quiz only once. Check all answers before submitting.";
+
+      const downloadBtn = document.createElement("button");
+      downloadBtn.type = "button";
+      downloadBtn.className = "btn btn-outline-secondary mb-3";
+      downloadBtn.textContent = "Download Questions and Options";
+      downloadBtn.addEventListener("click", () => {
+        downloadQuestionSheet(quiz);
+      });
+
+      const form = document.createElement("form");
+      form.id = "attemptForm";
+
+      quiz.questions.forEach((question, index) => {
+        const card = document.createElement("div");
+        card.className = "question-card";
+
+        const questionTitle = document.createElement("h5");
+        questionTitle.className = "fw-bold";
+        questionTitle.textContent =
+          `${index + 1}. ${question.text || "Question"}`;
+
+        const topic = document.createElement("p");
+        topic.className = "muted";
+        topic.textContent =
+          `Topic: ${question.topic || quiz.topic || "General Topic"}`;
+
+        const marks = document.createElement("p");
+        marks.className = "muted";
+        marks.textContent =
+          `Marks: ${getQuestionMarks(question, quiz)}`;
+
+        card.append(questionTitle, topic, marks);
+
+        (question.options || []).forEach((option, optionIndex) => {
+          const wrapper = document.createElement("div");
+          wrapper.className = "form-check";
+
+          const input = document.createElement("input");
+          input.className = "form-check-input";
+          input.type = "radio";
+          input.name = `question_${index}`;
+          input.id = `question_${index}_option_${optionIndex}`;
+          input.value = String(optionIndex);
+          input.required = true;
+
+          const label = document.createElement("label");
+          label.className = "form-check-label";
+          label.htmlFor = input.id;
+          label.textContent =
+            `${String.fromCharCode(65 + optionIndex)}. ${option}`;
+
+          wrapper.append(input, label);
+          card.appendChild(wrapper);
+        });
+
+        form.appendChild(card);
+      });
+
+      const submitBtn = document.createElement("button");
+      submitBtn.type = "submit";
+      submitBtn.className = "btn btn-primary";
+      submitBtn.textContent = "Submit Quiz";
+
+      const backBtn = document.createElement("button");
+      backBtn.type = "button";
+      backBtn.className = "btn btn-outline-secondary ms-2";
+      backBtn.textContent = "Back to Quizzes";
+      backBtn.addEventListener("click", () => {
+        location.href = "student-quizzes.html";
+      });
+
+      form.append(submitBtn, backBtn);
+
+      form.addEventListener("submit", async event => {
+        event.preventDefault();
+        if (isQuizExpired(quiz)) {
+  showMessage(
+    "This quiz has expired. Your answers cannot be submitted.",
+    "warning"
+  );
+  return;
+}
+
+        if (submitting) return;
+
+        const answers = {};
+
+        quiz.questions.forEach((question, index) => {
+          const selected = form.querySelector(
+            `input[name="question_${index}"]:checked`
+          );
+
+          if (selected) {
+            answers[index] = Number(selected.value);
+          }
+        });
+
+        if (Object.keys(answers).length !== quiz.questions.length) {
+          showMessage(
+            "Please answer every question before submitting.",
+            "warning"
+          );
+          return;
+        }
+
+        const confirmed = window.confirm(
+          "Submit this quiz now? You cannot attempt it again after submission."
+        );
+
+        if (!confirmed) return;
+
+        submitting = true;
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Submitting...";
+
+        try {
+  const quizVersion = quiz.version || 1;
+  const stableId = getStableAttemptId(currentUser.uid, `${quiz.id}_v${quizVersion}`);
+  const stableRef = doc(db, "quizAttempts", stableId);
+
+          // Check the stable ID and older attempts before submission.
+          const existingStableAttempt = await getDoc(stableRef);
+
+          const existingAttempts = await getDocs(query(
+            collection(db, "quizAttempts"),
+            where("studentId", "==", currentUser.uid)
+          ));
+
+          const alreadyAttempted =
+  existingStableAttempt.exists() ||
+  existingAttempts.docs.some(item =>
+    item.data().quizId === quiz.id &&
+    (item.data().version || 1) === quizVersion
+  );
+
+          if (alreadyAttempted) {
+            await loadQuizzesAndAttempts();
+            showMessage(
+              "This quiz has already been attempted. Retakes are not allowed.",
+              "warning"
+            );
+            quizArea.replaceChildren();
+            quizListSection.hidden = false;
+            return;
+          }
+
+          let score = 0;
+
+          quiz.questions.forEach((question, index) => {
+            if (answers[index] === Number(question.correctIndex)) {
+              score += getQuestionMarks(question, quiz);
+            }
+          });
+
+          const totalMarks = getTotalMarks(quiz.questions, quiz);
+          const percentage = getPercentage(score, totalMarks);
+
+          const attemptData = {
+            quizId: quiz.id,
+            version: quizVersion,
+            quizTitle: quiz.title || "Quiz",
+            courseId: quiz.courseId || "",
+            courseName: quiz.courseName || "Not specified",
+            topic: quiz.topic || "General Topic",
+            studentId: currentUser.uid,
+            studentName,
+            questions: quiz.questions,
+            answers,
+            score,
+            totalMarks,
+            percentage,
+            submittedAt: serverTimestamp()
+          };
+
+          // A transaction creates the document only if it does not exist.
+          // Firestore rules should also prevent updates and duplicate attempts.
+          await runTransaction(db, async transaction => {
+            const existing = await transaction.get(stableRef);
+
+            if (existing.exists()) {
+              throw new Error("ATTEMPT_ALREADY_EXISTS");
+            }
+
+            transaction.set(stableRef, attemptData);
+          });
+
+          const savedAttempt = {
+            ...attemptData,
+            submittedAt: new Date()
+          };
+
+          attemptsByQuiz.set(`${quiz.id}_${quizVersion}`, {
+  id: stableId,
+  ...savedAttempt
+});
+
+          renderQuizList();
+          showResult(quiz, savedAttempt);
+        } catch (error) {
+          console.error("Quiz submission failed:", error);
+
+          if (error.message === "ATTEMPT_ALREADY_EXISTS") {
+            await loadQuizzesAndAttempts();
+            showMessage(
+              "This quiz has already been submitted. Your saved result is available.",
+              "warning"
+            );
+            quizArea.replaceChildren();
+            quizListSection.hidden = false;
+          } else {
+            showMessage(
+              "Could not save your result. Check your internet connection and Firestore rules. Your quiz has not been confirmed as submitted."
+            );
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Submit Quiz";
+          }
+        } finally {
+          submitting = false;
+        }
+      });
+
+      panel.append(heading, details, note, downloadBtn, form);
+      quizArea.appendChild(panel);
+      panel.scrollIntoView({ behavior: "smooth" });
+    }
+
+    function showResult(quiz, attempt) {
+      clearMessage();
+      quizListSection.hidden = true;
+      quizArea.replaceChildren();
+
+      const questions =
+        Array.isArray(attempt.questions) && attempt.questions.length
+          ? attempt.questions
+          : quiz.questions || [];
+
+      const answers = attempt.answers || {};
+      const totalMarks = Number(
+        attempt.totalMarks ?? getTotalMarks(questions, quiz)
+      );
+      const score = Number(attempt.score || 0);
+      const percentage = Number(
+        attempt.percentage ?? getPercentage(score, totalMarks)
+      );
+
+      const feedback = getPerformanceFeedback(percentage);
+      const revisionTopics = getRevisionTopics(
+        questions,
+        answers,
+        attempt.topic || quiz.topic
+      );
+
+      const courseName =
+        attempt.courseName || quiz.courseName || "Not specified";
+
+      const panel = document.createElement("div");
+      panel.className = "panel";
+
+      const heading = document.createElement("h3");
+      heading.className = "fw-bold";
+      heading.textContent = "Result";
+
+      const title = document.createElement("p");
+      title.className = "text-secondary";
+      title.textContent =
+        `${attempt.quizTitle || quiz.title || "Quiz"} | Course: ${courseName}`;
+
+      const topicLine = document.createElement("p");
+      topicLine.className = "text-secondary";
+      topicLine.textContent =
+        `Quiz topic: ${attempt.topic || quiz.topic || "General Topic"}`;
+
+      const scoreText = document.createElement("h4");
+      scoreText.className = "fw-bold mt-3";
+      scoreText.textContent =
+        `Score: ${score} / ${totalMarks} (${percentage}%)`;
+
+      const performance = document.createElement("div");
+      performance.className = `performance-box ${feedback.className}`;
+
+      const performanceTitle = document.createElement("strong");
+      performanceTitle.textContent = feedback.title;
+
+      const feedbackText = document.createElement("p");
+      feedbackText.className = "mb-0 mt-2";
+      feedbackText.textContent = feedback.message;
+
+      performance.append(performanceTitle, feedbackText);
+
+      const submitted = document.createElement("p");
+      submitted.className = "muted";
+      submitted.textContent = `Submitted: ${formatDate(attempt.submittedAt)}`;
+
+      const lockNote = document.createElement("div");
+      lockNote.className = "alert alert-secondary";
+      lockNote.textContent =
+        "Your result is saved. This quiz cannot be attempted again.";
+
+      panel.append(
+        heading,
+        title,
+        topicLine,
+        scoreText,
+        performance,
+        submitted,
+        lockNote
+      );
+
+      const revisionHeading = document.createElement("h5");
+      revisionHeading.className = "fw-bold mt-4";
+      revisionHeading.textContent = "Revision Focus";
+
+      const revisionText = document.createElement("p");
+
+      if (revisionTopics.length > 0) {
+        revisionText.textContent =
+          `In ${courseName}, revise these topic(s): ` +
+          `${revisionTopics.join(", ")}.`;
+      } else {
+        revisionText.textContent =
+          `You answered every question correctly in ${courseName}. ` +
+          "Continue practising to maintain your understanding.";
+      }
+
+      panel.append(revisionHeading, revisionText);
+
+      const answerHeading = document.createElement("h5");
+      answerHeading.className = "fw-bold mt-4";
+      answerHeading.textContent = "Answer Sheet";
+
+      const answerIntro = document.createElement("p");
+      answerIntro.className = "muted";
+      answerIntro.textContent =
+        "Review your selected answer and compare it with the correct answer.";
+
+      panel.append(answerHeading, answerIntro);
+
+      questions.forEach((question, index) => {
+        const selected = answers[index];
+        const correctIndex = Number(question.correctIndex);
+
+        const isCorrect =
+          selected != null &&
+          Number(selected) === correctIndex;
+
+        const card = document.createElement("div");
+        card.className =
+          `question-card ${isCorrect ? "answer-correct" : "answer-incorrect"}`;
+
+        const qTitle = document.createElement("h6");
+        qTitle.className = "fw-bold";
+        qTitle.textContent =
+          `${index + 1}. ${question.text || "Question"}`;
+
+        const topic = document.createElement("p");
+        topic.className = "muted";
+        topic.textContent =
+          `Topic: ${question.topic || attempt.topic || quiz.topic || "General Topic"}`;
+
+        const selectedText = document.createElement("p");
+        const selectedOption = selected == null
+          ? "Not answered"
+          : question.options?.[Number(selected)] ?? "Not available";
+
+        selectedText.textContent = `Your answer: ${selectedOption}`;
+
+        const correctText = document.createElement("p");
+        correctText.className = "mb-1";
+        correctText.textContent =
+          `Correct answer: ${question.options?.[correctIndex] ?? "Not available"}`;
+
+        const resultLabel = document.createElement("span");
+        resultLabel.className = isCorrect
+          ? "status-correct"
+          : "status-incorrect";
+        resultLabel.textContent = isCorrect ? "Correct" : "Incorrect";
+
+        card.append(qTitle, topic, resultLabel, selectedText, correctText);
+        panel.appendChild(card);
+      });
+
+      const downloadBtn = document.createElement("button");
+      downloadBtn.type = "button";
+      downloadBtn.className = "btn btn-outline-primary";
+      downloadBtn.textContent = "Download Questions and Options";
+      downloadBtn.addEventListener("click", () => {
+        downloadQuestionSheet(
+          {
+            ...quiz,
+            title: attempt.quizTitle || quiz.title,
+            courseName,
+            topic: attempt.topic || quiz.topic
+          },
+          questions
+        );
+      });
+
+      const backBtn = document.createElement("button");
+      backBtn.type = "button";
+      backBtn.className = "btn btn-secondary ms-2";
+      backBtn.textContent = "Back to Quizzes";
+      backBtn.addEventListener("click", () => {
+        location.href = "student-quizzes.html";
+      });
+
+      panel.append(downloadBtn, backBtn);
+      quizArea.appendChild(panel);
+      panel.scrollIntoView({ behavior: "smooth" });
+    }
+
+    onAuthStateChanged(auth, async user => {
+      if (!user) {
+        location.href = "login.html";
+        return;
+      }
+
+      currentUser = user;
+
+      try {
+        await loadStudentData();
+
+        const requestedQuizId =
+          new URLSearchParams(location.search).get("quizId");
+
+        if (!requestedQuizId) {
+          showMessage(
+            "No quiz was selected. Return to the quiz list.",
+            "warning"
+          );
+
+          const back = document.createElement("a");
+          back.href = "student-quizzes.html";
+          back.className = "btn btn-outline-primary";
+          back.textContent = "Back to Quizzes";
+          quizArea.appendChild(back);
+          return;
+        }
+
+        const quiz = quizzes.find(item => item.id === requestedQuizId);
+
+        if (!quiz) {
+          showMessage(
+            "This quiz is unavailable or is no longer published.",
+            "warning"
+          );
+
+          const back = document.createElement("a");
+          back.href = "student-quizzes.html";
+          back.className = "btn btn-outline-primary";
+          back.textContent = "Back to Quizzes";
+          quizArea.appendChild(back);
+          return;
+        }
+
+        const previousAttempt = attemptsByQuiz.get(quiz.id);
+
+        if (previousAttempt) {
+          showResult(quiz, previousAttempt);
+        } else {
+          startQuiz(quiz);
+        }
+      } catch (error) {
+        console.error("Student quiz page error:", error);
+        showMessage(
+          "Could not load the quiz page. Check your profile, Firestore rules and internet connection."
+        );
+      }
+    });
+  </script>
+</body>
+</html>

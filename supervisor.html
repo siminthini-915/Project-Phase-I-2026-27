@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EduCore - Supervisor</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+    body {
+        background: #f5f7fb !important;
+        color: #172b4d;
+        font-family: Arial, sans-serif;
+    }
+
+    .container {
+        max-width: 1200px;
+    }
+
+    h2 {
+        color: #102a56;
+        font-weight: 700;
+    }
+
+    .card {
+        background: #ffffff;
+        border: 1px solid #e1e7f0;
+        border-radius: 12px;
+        box-shadow: 0 4px 16px rgba(16, 42, 86, 0.06);
+    }
+
+    .card h5 {
+        color: #102a56;
+        font-weight: 700;
+    }
+
+    .form-control,
+    .form-select {
+        border: 1px solid #d5deeb;
+        border-radius: 7px;
+        padding: 10px;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #173b70;
+        box-shadow: 0 0 0 0.2rem rgba(23, 59, 112, 0.12);
+    }
+
+    .btn-primary {
+        background: #102a56;
+        border-color: #102a56;
+    }
+
+    .btn-primary:hover {
+        background: #193d70;
+        border-color: #193d70;
+    }
+
+    .btn-outline-danger {
+        border-radius: 7px;
+    }
+
+    .table {
+        margin-bottom: 0;
+    }
+
+    .table thead th {
+        background: #102a56;
+        color: #ffffff;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .table td,
+    .table th {
+        padding: 12px;
+        vertical-align: middle;
+    }
+
+    .table tbody tr:hover {
+        background: #f0f4fa;
+    }
+
+
+    /* EduCore consistent styling: scoped to this page only */
+    body.ec-consistent-page {
+        background: #f5f7fb !important;
+        color: #24304a;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 15px;
+    }
+    body.ec-consistent-page .ec-heading-bar,
+    body.ec-consistent-page .ec-section-heading {
+        display: block;
+        width: auto;
+        background: #24304a;
+        color: #ffffff;
+        padding: 12px 16px;
+        border-radius: 9px;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 18px;
+        font-weight: 700;
+        line-height: 1.4;
+        margin: 0;
+    }
+    body.ec-consistent-page .ec-supervisor-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        background: #24304a;
+        border-radius: 9px;
+        padding: 12px 16px;
+    }
+    body.ec-consistent-page .ec-supervisor-topbar .ec-heading-bar {
+        flex: 1;
+        background: transparent;
+        color: #ffffff;
+        padding: 0;
+        margin: 0;
+    }
+    body.ec-consistent-page .ec-supervisor-topbar .btn-outline-danger {
+        flex-shrink: 0;
+        color: #24304a;
+        background: #ffffff;
+        border: 1px solid #ffffff;
+        border-radius: 8px;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 14px;
+        font-weight: 600;
+        padding: 8px 14px;
+    }
+    body.ec-consistent-page .ec-supervisor-topbar .btn-outline-danger:hover,
+    body.ec-consistent-page .ec-supervisor-topbar .btn-outline-danger:focus {
+        color: #19243b;
+        background: #edf1f7;
+        border-color: #edf1f7;
+    }
+    @media (max-width: 480px) {
+        body.ec-consistent-page .ec-supervisor-topbar {
+            gap: 10px;
+            padding: 10px 12px;
+        }
+        body.ec-consistent-page .ec-supervisor-topbar .ec-heading-bar {
+            font-size: 16px;
+        }
+    }
+    body.ec-consistent-page .ec-section-heading {
+        width: 100%;
+        margin-bottom: 18px;
+    }
+    body.ec-consistent-page .form-control,
+    body.ec-consistent-page .form-select {
+        border-color: #dfe2e8;
+        border-radius: 8px;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 14px;
+    }
+    body.ec-consistent-page .form-control:focus,
+    body.ec-consistent-page .form-select:focus {
+        border-color: #24304a;
+        box-shadow: 0 0 0 0.2rem rgba(36, 48, 74, 0.12);
+    }
+    body.ec-consistent-page .btn-primary {
+        background: #24304a;
+        border-color: #24304a;
+        border-radius: 8px;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 14px;
+        font-weight: 600;
+        padding: 8px 14px;
+    }
+    body.ec-consistent-page .btn-primary:hover,
+    body.ec-consistent-page .btn-primary:focus {
+        background: #19243b;
+        border-color: #19243b;
+    }
+    body.ec-consistent-page .btn-outline-danger {
+        color: #ffffff;
+        background: #24304a;
+        border: 1px solid #24304a;
+        border-radius: 8px;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 14px;
+        font-weight: 600;
+        padding: 8px 14px;
+    }
+    body.ec-consistent-page .btn-outline-danger:hover,
+    body.ec-consistent-page .btn-outline-danger:focus {
+        color: #ffffff;
+        background: #19243b;
+        border-color: #19243b;
+    }
+    body.ec-consistent-page .table thead th {
+        background: #24304a;
+        color: #ffffff;
+    }
+</style>
+
+</head>
+<body class="bg-light ec-consistent-page">
+  <div class="container py-4">
+    <div class="ec-supervisor-topbar mb-4">
+      <h2 class="ec-heading-bar">Supervisor Dashboard</h2>
+      <button id="logoutBtn" class="btn btn-outline-danger">Logout</button>
+    </div>
+
+    <div class="card p-3">
+      <h5 class="ec-section-heading">User &amp; Role Management</h5>
+      <input id="searchInput" class="form-control my-3"
+             placeholder="Search by name or email">
+
+      <div id="status" class="mb-2 text-muted">Loading users...</div>
+      <div class="table-responsive">
+        <table class="table table-bordered align-middle bg-white">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Current Role</th>
+              <th>Change Role</th>
+            </tr>
+          </thead>
+          <tbody id="userTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+<script type="module">
+import { auth, db } from "./firebase.js";
+import {
+  onAuthStateChanged, signOut
+} from "https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js";
+import {
+  collection, doc, getDoc, getDocs, updateDoc
+} from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
+
+const $ = id => document.getElementById(id);
+let users = [];
+let currentUser = null;
+
+onAuthStateChanged(auth, async user => {
+  if (!user) {
+    location.href = "login.html";
+    return;
+  }
+
+  currentUser = user;
+
+  try {
+    const adminSnap = await getDoc(doc(db, "users", user.uid));
+
+    if (!adminSnap.exists() || adminSnap.data().role !== "supervisor") {
+      alert("Supervisor access required.");
+      location.href = "login.html";
+      return;
+    }
+
+    await loadUsers();
+  } catch (error) {
+    console.error(error);
+    $("status").textContent = "Could not load users. Check Firestore rules.";
+  }
+});
+
+async function loadUsers() {
+  const snapshot = await getDocs(collection(db, "users"));
+  users = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+  renderUsers();
+}
+
+function renderUsers() {
+  const query = $("searchInput").value.trim().toLowerCase();
+  const filtered = users.filter(u =>
+    String(u.email || "").toLowerCase().includes(query) ||
+    String(u.name || u.fullName || "").toLowerCase().includes(query)
+  );
+
+  $("status").textContent = `${filtered.length} user(s) found`;
+  $("userTable").replaceChildren();
+
+  filtered.forEach(u => {
+    const tr = document.createElement("tr");
+    const name = u.name || u.fullName || "—";
+    const role = String(u.role || "student").toLowerCase();
+
+    function cell(value) {
+      const td = document.createElement("td");
+      td.textContent = value;
+      tr.appendChild(td);
+      return td;
+    }
+
+    cell(name);
+    cell(u.email || "Email unavailable");
+    cell(role);
+
+    const roleCell = document.createElement("td");
+    const select = document.createElement("select");
+    select.className = "form-select form-select-sm";
+
+    ["student", "admin", "supervisor"].forEach(r => {
+      const option = document.createElement("option");
+      option.value = r;
+      option.textContent = r[0].toUpperCase() + r.slice(1);
+      option.selected = role === r;
+      select.appendChild(option);
+    });
+
+    const save = document.createElement("button");
+    save.className = "btn btn-sm btn-primary mt-2";
+    save.textContent = "Save Role";
+    save.disabled = u.id === currentUser.uid;
+
+    save.addEventListener("click", async () => {
+      const newRole = select.value;
+
+      if (u.id === currentUser.uid) {
+        alert("You cannot change your own role here.");
+        return;
+      }
+
+      if (!confirm(`Change ${u.email || name} role to ${newRole}?`)) return;
+
+      save.disabled = true;
+      try {
+        const changes = { role: newRole };
+
+        await updateDoc(doc(db, "users", u.id), changes);
+
+        alert("Role updated.");
+        await loadUsers();
+      } catch (error) {
+        console.error(error);
+        alert("Role update failed. Check Firestore Security Rules.");
+      } finally {
+        save.disabled = false;
+      }
+    });
+
+    roleCell.append(select, save);
+    tr.appendChild(roleCell);
+
+    $("userTable").appendChild(tr);
+  });
+}
+
+$("searchInput").addEventListener("input", renderUsers);
+
+$("logoutBtn").addEventListener("click", async () => {
+  await signOut(auth);
+  location.href = "login.html";
+});
+</script>
+</body>
+</html>

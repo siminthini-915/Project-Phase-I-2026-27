@@ -1,0 +1,316 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduCore | Student Doubts</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+
+  <style>
+    body {
+      background: #f5f7fc;
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: #202b45;
+    }
+
+    .main {
+      max-width: 1100px;
+      margin: auto;
+      padding: 35px 20px;
+    }
+
+    .panel {
+      background: white;
+      border: 1px solid #e9edf5;
+      border-radius: 16px;
+      padding: 22px;
+      margin-bottom: 20px;
+    }
+
+    .doubt-card {
+      background: white;
+      border: 1px solid #e9edf5;
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 18px;
+    }
+
+    .muted {
+      color: #7c879e;
+      font-size: 13px;
+    }
+
+    .reply-box {
+      background: #f7f8fc;
+      border-radius: 10px;
+      padding: 15px;
+      margin-top: 15px;
+    }
+
+    .form-control {
+      border-radius: 9px;
+    }
+
+    .btn-primary {
+      background: #3659d9;
+      border-color: #3659d9;
+      border-radius: 9px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="main">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <p class="muted mb-1">EDUCORE ADMINISTRATION</p>
+        <h2 class="fw-bold">Student Doubts</h2>
+      </div>
+
+      <a href="admin-dashboard.html" class="btn btn-outline-secondary">
+        <i class="fa-solid fa-arrow-left me-1"></i> Dashboard
+      </a>
+    </div>
+
+    <div class="panel">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+        
+        </div>
+
+        <button class="btn btn-outline-primary btn-sm" id="refreshBtn">
+          <i class="fa-solid fa-rotate me-1"></i> Refresh
+        </button>
+      </div>
+    </div>
+
+    <div id="doubtsList">
+      <div class="text-center text-muted py-5">
+        Loading student doubts...
+      </div>
+    </div>
+
+  </main>
+
+  <script type="module">
+
+    import { auth, db } from "./firebase.js";
+
+    import {
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js";
+
+    import {
+      collection,
+      getDocs,
+      doc,
+      updateDoc,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
+
+    const $ = id => document.getElementById(id);
+
+    const safe = value => String(value ?? "").replace(/[&<>"']/g, char => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    })[char]);
+
+    let currentUser = null;
+
+    onAuthStateChanged(auth, async user => {
+
+      if (!user) {
+        location.href = "login.html";
+        return;
+      }
+
+      currentUser = user;
+
+      try {
+        const { getDoc, doc } = await import(
+          "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js"
+        );
+
+        const userSnap = await getDoc(doc(db, "users", user.uid));
+
+        if (!userSnap.exists() ||
+            !["admin", "supervisor"].includes(userSnap.data().role)) {
+          alert("Faculty access only.");
+          location.href = "login.html";
+          return;
+        }
+
+        loadDoubts();
+
+      } catch (error) {
+        console.error(error);
+        alert("Could not verify your account.");
+      }
+    });
+
+    async function loadDoubts() {
+
+      $("doubtsList").innerHTML =
+        `<div class="text-center text-muted py-5">Loading doubts...</div>`;
+
+      try {
+
+        const snapshot = await getDocs(collection(db, "doubts"));
+
+        const doubts = snapshot.docs
+          .map(item => ({ id: item.id, ...item.data() }))
+          .sort((a, b) => {
+            const timeA = a.createdAt?.toMillis?.() || 0;
+            const timeB = b.createdAt?.toMillis?.() || 0;
+            return timeB - timeA;
+          });
+
+        if (!doubts.length) {
+          $("doubtsList").innerHTML =
+            `<div class="panel text-center text-muted py-5">
+              <i class="fa-solid fa-circle-check fa-2x mb-3"></i>
+              <p class="mb-0">No student doubts submitted yet.</p>
+            </div>`;
+          return;
+        }
+
+        $("doubtsList").innerHTML = doubts.map(doubt => `
+
+          <div class="doubt-card">
+
+            <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
+
+              <div>
+                <h5 class="fw-bold mb-1">
+                  ${safe(doubt.studentEmail || "Student")}
+                </h5>
+                <div class="muted">
+                  Course: ${safe(doubt.courseName)}
+                </div>
+                
+                <div class="muted">
+                  Video/Lesson: ${safe(doubt.lessonTitle)}
+                </div>
+              </div>
+
+              <span class="badge ${
+                doubt.status === "answered"
+                  ? "text-bg-success"
+                  : "text-bg-warning"
+              }">
+                ${safe(doubt.status || "pending")}
+              </span>
+
+            </div>
+
+            <div class="p-3 bg-light rounded-3">
+              <div class="small fw-bold mb-2">Student's Doubt</div>
+              ${safe(doubt.message)}
+            </div>
+
+            ${doubt.facultyReply ? `
+              <div class="mt-3 p-3 rounded-3 border">
+                <div class="small fw-bold text-success mb-2">
+                  Faculty Reply
+                </div>
+                ${safe(doubt.facultyReply)}
+              </div>
+            ` : ""}
+
+            <div class="reply-box">
+
+              <label class="form-label fw-semibold">
+                ${doubt.facultyReply ? "Update Reply" : "Write Your Reply"}
+              </label>
+
+              <textarea
+                class="form-control mb-2"
+                rows="3"
+                id="reply-${safe(doubt.id)}"
+                placeholder="Type your answer here..."
+              >${safe(doubt.facultyReply || "")}</textarea>
+
+              <button
+                class="btn btn-primary btn-sm"
+                data-reply="${safe(doubt.id)}">
+                <i class="fa-solid fa-paper-plane me-1"></i>
+                Send Reply
+              </button>
+
+            </div>
+
+          </div>
+
+        `).join("");
+
+        document.querySelectorAll("[data-reply]").forEach(button => {
+          button.addEventListener("click", () => {
+            sendReply(button.dataset.reply, button);
+          });
+        });
+
+      } catch (error) {
+        console.error("Loading doubts error:", error);
+
+        $("doubtsList").innerHTML =
+          `<div class="alert alert-danger">
+            Could not load doubts. Check Firestore Rules.
+          </div>`;
+      }
+    }
+
+    async function sendReply(doubtId, button) {
+
+      const reply = $(`reply-${doubtId}`).value.trim();
+
+      if (!reply) {
+        alert("Please type a reply.");
+        return;
+      }
+
+      try {
+
+        button.disabled = true;
+        button.textContent = "Sending...";
+
+        await updateDoc(doc(db, "doubts", doubtId), {
+          facultyReply: reply,
+          repliedAt: serverTimestamp(),
+          status: "answered"
+        });
+
+        alert("Reply sent successfully!");
+
+        await loadDoubts();
+
+      } catch (error) {
+        console.error("Reply error:", error);
+        alert("Could not send reply. Check Firestore Rules.");
+      } finally {
+        button.disabled = false;
+        button.textContent = "Send Reply";
+      }
+    }
+$("refreshBtn").addEventListener("click", async () => {
+  const btn = $("refreshBtn");
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Refreshing...';
+
+  await loadDoubts();
+
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fa-solid fa-rotate"></i> Refresh';
+});
+  </script>
+
+</body>
+</html>

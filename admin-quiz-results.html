@@ -1,0 +1,339 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz Results | EduCore</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    body {
+      background: #f5f7fb;
+      color: #24304a;
+    }
+
+    .container { max-width: 1100px; }
+
+    h2 { font-weight: 750; color: #24304a; }
+
+    .text-secondary { color: #6c757d !important; }
+
+    .table-wrap {
+      background: #fff;
+      border: 1px solid #e1e5ee;
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 22px;
+      box-shadow: 0 4px 15px rgba(0,0,0,.03);
+      overflow-x: auto;
+    }
+
+    .table { color: #24304a; margin-bottom: 0; border-color: #e1e5ee; }
+
+    .table thead th {
+      color: #24304a;
+      font-weight: 700;
+      background: #f5f7fb;
+      white-space: nowrap;
+    }
+
+    .table tbody td { color: #24304a; vertical-align: middle; }
+
+    .section-title { font-weight: 700; font-size: 19px; }
+
+    #message:empty { display: none; }
+
+    @media (max-width: 576px) {
+      .table-wrap { padding: 17px; }
+    }
+  </style>
+</head>
+
+<body>
+<div class="container py-4">
+
+  <a href="admin-dashboard.html" class="btn btn-outline-secondary mb-3">
+    ← Admin Dashboard
+  </a>
+
+  <h2>Student Quiz Results</h2>
+  <p class="text-secondary">Review quiz attempts and course-wise student performance.</p>
+
+  <div id="message"></div>
+
+
+  <section id="quizSummary" class="table-wrap" hidden>
+    <h4 class="section-title" id="selectedQuizTitle"></h4>
+    <p class="text-secondary mb-0" id="courseName"></p>
+
+    <div class="row g-3 mt-2">
+      <div class="col-6 col-md-4">
+        <div class="border rounded-3 p-3">
+          <div class="text-secondary">Enrolled Students</div>
+          <h3 id="totalStudents">0</h3>
+        </div>
+      </div>
+
+      <div class="col-6 col-md-4">
+        <div class="border rounded-3 p-3">
+          <div class="text-secondary">Attempted</div>
+          <h3 class="text-success" id="attemptedCount">0</h3>
+        </div>
+      </div>
+
+      <div class="col-12 col-md-4">
+        <div class="border rounded-3 p-3">
+          <div class="text-secondary">Not Attempted</div>
+          <h3 class="text-danger" id="notAttemptedCount">0</h3>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="table-wrap">
+    <h4 class="section-title">Attempted Students</h4>
+    <div class="table-responsive mt-3">
+      <table class="table table-striped align-middle">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Email</th>
+            <th>Score</th>
+            <th>Percentage</th>
+            <th>Performance</th>
+            <th>Submitted</th>
+          </tr>
+        </thead>
+        <tbody id="attemptedBody">
+          <tr><td colspan="6">Select a quiz to view results.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="table-wrap">
+    <h4 class="section-title">Not Attempted Students</h4>
+    <div class="table-responsive mt-3">
+      <table class="table table-striped align-middle">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Email</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="notAttemptedBody">
+          <tr><td colspan="3">Select a quiz to view students.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+
+</div>
+
+<script type="module">
+
+import { auth, db } from "./firebase.js";
+
+import {
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js";
+
+import {
+  collection, getDocs, getDoc, doc, query, where
+} from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
+
+const $ = id => document.getElementById(id);
+
+const quizId = new URLSearchParams(location.search).get("quizId");
+
+function showMessage(text, type = "danger") {
+  $("message").replaceChildren();
+  const alert = document.createElement("div");
+  alert.className = `alert alert-${type}`;
+  alert.textContent = text;
+  $("message").appendChild(alert);
+}
+
+function getPercentage(attempt) {
+  const total = Number(attempt.totalMarks || 0);
+  const score = Number(attempt.score || 0);
+  return total > 0 ? Math.round(score / total * 100) : 0;
+}
+
+function getPerformance(percentage) {
+  if (percentage >= 75) return "Excellent";
+  if (percentage >= 50) return "Good";
+  return "Poor";
+}
+
+function getSubmittedDate(attempt) {
+  return attempt.submittedAt?.toDate
+    ? attempt.submittedAt.toDate().toLocaleString()
+    : "Just submitted";
+}
+
+function addCell(row, value) {
+  const cell = document.createElement("td");
+  cell.textContent = value;
+  row.appendChild(cell);
+}
+
+onAuthStateChanged(auth, async user => {
+  if (!user) {
+    location.href = "login.html";
+    return;
+  }
+
+  try {
+    const userSnap = await getDoc(doc(db, "users", user.uid));
+
+    if (!userSnap.exists() || userSnap.data().role !== "admin") {
+      showMessage("Admin access only.");
+      return;
+    }
+
+    if (!quizId) {
+      showMessage("Quiz ID is missing. Open results from Manage Quizzes.");
+      return;
+    }
+
+    await loadResults();
+
+  } catch (error) {
+    console.error(error);
+    showMessage("Could not load results: " + error.message);
+  }
+});
+
+async function loadResults() {
+  const quizSnap = await getDoc(doc(db, "quizzes", quizId));
+
+  if (!quizSnap.exists()) {
+    showMessage("Quiz not found.");
+    return;
+  }
+
+  const quiz = quizSnap.data();
+
+  if (!quiz.courseId) {
+    showMessage("This quiz does not have a courseId.");
+    return;
+  }
+
+  $("selectedQuizTitle").textContent = quiz.title || "Untitled Quiz";
+  $("courseName").textContent = "Course: " + (quiz.courseName || "Course");
+  $("quizSummary").hidden = false;
+
+  $("attemptedBody").innerHTML =
+    '<tr><td colspan="6">Loading...</td></tr>';
+
+  $("notAttemptedBody").innerHTML =
+    '<tr><td colspan="3">Loading...</td></tr>';
+
+  // Fetch old enrollments from users/{uid}/enrollments
+  const usersSnap = await getDocs(collection(db, "users"));
+  const enrolledStudents = [];
+
+  for (const userDoc of usersSnap.docs) {
+    const profile = userDoc.data();
+
+    if (profile.role !== "student") continue;
+
+    const enrollmentSnap = await getDocs(
+      collection(db, "users", userDoc.id, "enrollments")
+    );
+
+    enrollmentSnap.forEach(d => {
+      const enrollment = d.data();
+
+      if (enrollment.courseId === quiz.courseId) {
+        enrolledStudents.push({
+          ...enrollment,
+          studentId: userDoc.id,
+          studentName: profile.name || profile.fullName || "Student",
+          studentEmail: profile.email || "—"
+        });
+      }
+    });
+  }
+
+  // Fetch quiz attempts
+  const attemptSnap = await getDocs(query(
+    collection(db, "quizAttempts"),
+    where("quizId", "==", quizId)
+  ));
+
+  const attempts = attemptSnap.docs.map(d => ({
+    id: d.id,
+    ...d.data()
+  }));
+
+  attempts.sort((a, b) =>
+    (b.submittedAt?.toMillis?.() || 0) -
+    (a.submittedAt?.toMillis?.() || 0)
+  );
+
+  const attemptedIds = new Set(
+    attempts.map(a => a.studentId).filter(Boolean)
+  );
+
+  const attemptedStudents = enrolledStudents.filter(student =>
+    attemptedIds.has(student.studentId)
+  );
+
+  const notAttemptedStudents = enrolledStudents.filter(student =>
+    !attemptedIds.has(student.studentId)
+  );
+
+  $("totalStudents").textContent = enrolledStudents.length;
+  $("attemptedCount").textContent = attemptedStudents.length;
+  $("notAttemptedCount").textContent = notAttemptedStudents.length;
+
+  $("attemptedBody").replaceChildren();
+  $("notAttemptedBody").replaceChildren();
+
+  if (!attemptedStudents.length) {
+    $("attemptedBody").innerHTML =
+      '<tr><td colspan="6">No students have attempted this quiz yet.</td></tr>';
+  } else {
+    attemptedStudents.forEach(student => {
+      const attempt = attempts.find(a =>
+        a.studentId === student.studentId
+      );
+
+      if (!attempt) return;
+
+      const percentage = getPercentage(attempt);
+      const row = document.createElement("tr");
+
+      addCell(row, student.studentName || attempt.studentName || "Student");
+      addCell(row, student.studentEmail || attempt.studentEmail || "—");
+      addCell(row, `${Number(attempt.score || 0)}/${Number(attempt.totalMarks || 0)}`);
+      addCell(row, `${percentage}%`);
+      addCell(row, getPerformance(percentage));
+      addCell(row, getSubmittedDate(attempt));
+
+      $("attemptedBody").appendChild(row);
+    });
+  }
+
+  if (!notAttemptedStudents.length) {
+    $("notAttemptedBody").innerHTML =
+      '<tr><td colspan="3">All enrolled students have attempted this quiz.</td></tr>';
+  } else {
+    notAttemptedStudents.forEach(student => {
+      const row = document.createElement("tr");
+      addCell(row, student.studentName);
+      addCell(row, student.studentEmail);
+      addCell(row, "Not Attempted");
+      $("notAttemptedBody").appendChild(row);
+    });
+  }
+}
+
+</script>
+</body>
+</html>

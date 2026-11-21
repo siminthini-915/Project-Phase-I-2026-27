@@ -1,0 +1,1177 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduCore | Admin Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary: #3659d9;
+      --sidebar: #17213d;
+      --page: #f5f7fc;
+      --text: #202b45;
+      --muted: #7c879e;
+      --border: #e9edf5;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--page);
+      color: var(--text);
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+    }
+
+    .sidebar {
+      width: 250px;
+      position: fixed;
+      inset: 0 auto 0 0;
+      background: var(--sidebar);
+      color: white;
+      padding: 25px 16px;
+      overflow-y: auto;
+      z-index: 1000;
+    }
+
+    .brand {
+      font-size: 25px;
+      font-weight: 800;
+      padding: 0 13px 30px;
+      letter-spacing: -.6px;
+    }
+
+    .brand span { color: #91a8ff; }
+
+    .nav-label {
+      color: #8995b1;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      padding: 10px 14px;
+    }
+
+    .side-link {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: #c5cde0;
+      padding: 13px 14px;
+      border-radius: 10px;
+      display: flex;
+      gap: 13px;
+      align-items: center;
+      text-align: left;
+      margin-bottom: 5px;
+      font-size: 14px;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .side-link i { width: 18px; text-align: center; }
+
+    .side-link:hover, .side-link.active {
+      background: #2c3b65;
+      color: white;
+    }
+
+    .side-link.active { box-shadow: inset 3px 0 #91a8ff; }
+
+    .main {
+      margin-left: 250px;
+      padding: 30px;
+      min-height: 100vh;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+      margin-bottom: 28px;
+    }
+
+    .eyebrow {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 5px;
+    }
+
+    h1 { font-size: 27px; font-weight: 750; margin: 0; }
+    h2 { font-size: 20px; font-weight: 750; }
+    h3 { font-size: 16px; font-weight: 700; }
+
+    .muted { color: var(--muted); font-size: 13px; }
+
+    .avatar {
+      width: 43px;
+      height: 43px;
+      border-radius: 14px;
+      background: #edf1ff;
+      color: var(--primary);
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+    }
+
+    .panel {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 17px;
+      padding: 22px;
+      box-shadow: 0 5px 20px rgba(31,48,90,.035);
+      margin-bottom: 22px;
+    }
+
+    .welcome {
+      background: linear-gradient(120deg, #263c87, #6379ec);
+      color: white;
+      border-radius: 20px;
+      padding: 28px;
+      margin-bottom: 24px;
+    }
+
+    .welcome p { color: #e3e8ff; margin: 8px 0 0; }
+
+    .stat-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      height: 100%;
+    }
+
+    .stat-icon {
+      width: 43px;
+      height: 43px;
+      display: grid;
+      place-items: center;
+      border-radius: 13px;
+      background: #edf1ff;
+      color: var(--primary);
+      margin-bottom: 17px;
+      font-size: 18px;
+    }
+
+    .stat-number { font-size: 27px; font-weight: 800; }
+    .stat-label { color: var(--muted); font-size: 13px; }
+
+    .section-view { display: none; }
+    .section-view.active { display: block; }
+
+    .action-card {
+      height: 100%;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 15px;
+      padding: 20px;
+      transition: transform .18s, box-shadow .18s;
+    }
+
+    .action-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 24px rgba(31,48,90,.07);
+    }
+
+    .action-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 13px;
+      display: grid;
+      place-items: center;
+      color: var(--primary);
+      background: #edf1ff;
+      margin-bottom: 14px;
+      font-size: 19px;
+    }
+
+    .course-card, .quiz-card {
+      border: 1px solid var(--border);
+      border-radius: 15px;
+      padding: 18px;
+      height: 100%;
+      background: white;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      border-radius: 9px;
+    }
+
+    .btn-outline-primary, .btn-outline-secondary,
+    .btn-outline-danger { border-radius: 9px; }
+
+    .form-control, .form-select { border-radius: 9px; padding: 10px 12px; }
+    .table th { color: var(--muted); font-size: 12px; font-weight: 700; }
+    .table td { vertical-align: middle; font-size: 14px; }
+    .table-responsive { border-radius: 12px; }
+
+    .empty-state {
+      text-align: center;
+      padding: 30px 15px;
+      color: var(--muted);
+    }
+
+    .question-box {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 15px;
+    }
+
+    .mobile-menu { display: none; }
+
+    @media (max-width: 800px) {
+      .sidebar { width: 75px; padding: 20px 9px; }
+      .brand { font-size: 0; padding: 0 10px 25px; }
+      .brand span { font-size: 20px; }
+      .nav-label { display: none; }
+      .side-link { justify-content: center; padding: 14px 5px; font-size: 0; }
+      .side-link i { font-size: 17px; }
+      .main { margin-left: 75px; padding: 20px 14px; }
+      h1 { font-size: 22px; }
+    }
+
+    @media (max-width: 480px) {
+      .main { padding: 15px 10px; }
+      .topbar { align-items: flex-start; }
+      .panel { padding: 16px; }
+    }
+  </style>
+</head>
+
+<body>
+<aside class="sidebar">
+  <div class="brand">Edu<span>Core</span></div>
+
+  <div class="nav-label">Workspace</div>
+
+  <button class="side-link active" data-view="dashboard">
+    <i class="fa-solid fa-house"></i> Dashboard
+  </button>
+
+  <button class="side-link" data-view="create-course">
+    <i class="fa-solid fa-plus"></i> Create Course
+  </button>
+
+  <button class="side-link" data-view="courses">
+    <i class="fa-solid fa-book-open"></i> Manage Courses
+  </button>
+
+  <a class="side-link" href="admin-quizzes.html">
+    <i class="fa-solid fa-clipboard-question"></i> Create Quiz
+  </a>
+
+  <a class="side-link" href="manage-quizzes.html">
+    <i class="fa-solid fa-list-check"></i> Manage Quizzes
+  </a>
+
+  <div class="nav-label mt-3">More</div>
+
+  <a class="side-link" href="admin-doubts.html">
+    <i class="fa-solid fa-circle-question"></i> Student Doubts
+  </a>
+
+  <button class="side-link" data-view="profile">
+    <i class="fa-solid fa-user"></i> Profile
+  </button>
+
+  <button class="side-link mt-4" id="logoutBtn">
+    <i class="fa-solid fa-right-from-bracket"></i> Logout
+  </button>
+</aside>
+
+
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">EDUCORE ADMINISTRATION</div>
+        <h1 id="pageTitle">Dashboard</h1>
+      </div>
+    
+    </header>
+
+    <!-- Dashboard overview -->
+    <section class="section-view active" id="view-dashboard">
+      <div class="welcome">
+        <div class="small mb-2">ADMIN CONTROL PANEL</div>
+        <h2 class="mb-0" style="font-size:26px">Welcome, <span id="welcomeName">Admin</span>!</h2>
+        <p>Manage courses, quizzes and student learning from one place.</p>
+      </div>
+
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-xl-3">
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fa-solid fa-book-open"></i></div>
+            <div class="stat-number" id="totalCourses">0</div>
+            <div class="stat-label">Total Courses</div>
+          </div>
+        </div>
+        <div class="col-6 col-xl-3">
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
+            <div class="stat-number" id="totalStudents">0</div>
+            <div class="stat-label">Registered Students</div>
+          </div>
+        </div>
+        <div class="col-6 col-xl-3">
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div>
+            <div class="stat-number" id="activeCourses">0</div>
+            <div class="stat-label">Active Courses</div>
+          </div>
+        </div>
+        <div class="col-6 col-xl-3">
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fa-solid fa-clipboard-check"></i></div>
+            <div class="stat-number" id="totalQuizzes">0</div>
+            <div class="stat-label">Published Quizzes</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2 class="mb-1">Quick Actions</h2>
+        <p class="muted mb-4">Choose what you want to manage.</p>
+        <div class="row g-3">
+          <div class="col-md-6 col-xl-3">
+            <button class="action-card text-start w-100" data-go="courses">
+              <div class="action-icon"><i class="fa-solid fa-plus"></i></div>
+              <h3>Add or Manage Courses</h3>
+              <p class="muted mb-0">Create, update and remove courses.</p>
+            </button>
+          </div>
+          <div class="col-md-6 col-xl-3">
+            <button class="action-card text-start w-100" data-go="content">
+              <div class="action-icon"><i class="fa-solid fa-folder-open"></i></div>
+              <h3>Course Content</h3>
+              <p class="muted mb-0">Manage modules, lessons and links.</p>
+            </button>
+          </div>
+          <div class="col-md-6 col-xl-3">
+            <button class="action-card text-start w-100" data-go="quizzes">
+              <div class="action-icon"><i class="fa-solid fa-clipboard-question"></i></div>
+              <h3>Manage Quizzes</h3>
+              <p class="muted mb-0">Create quizzes and publish them.</p>
+            </button>
+          </div>
+          <div class="col-md-6 col-xl-3">
+            <button class="action-card text-start w-100" data-go="results">
+              <div class="action-icon"><i class="fa-solid fa-chart-column"></i></div>
+              <h3>Quiz Results</h3>
+              <p class="muted mb-0">Review student scores and answers.</p>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Recently Added Courses</h2>
+        <div class="row g-3 mt-1" id="recentCourses"></div>
+      </div>
+    </section>
+<!-- Create Course -->
+<section class="section-view" id="view-create-course">
+  <div class="panel">
+        <h2 id="courseFormTitle">Add New Course</h2>
+        <p class="muted">Create a course for students to enroll in.</p>
+
+        <form id="courseForm">
+          <input type="hidden" id="editCourseId">
+
+          <div class="mb-3">
+            <label class="form-label">Course Name</label>
+            <input class="form-control" id="courseName" required maxlength="120"
+                   placeholder="e.g. Cloud Computing">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Course Description</label>
+            <textarea class="form-control" id="courseDescription" rows="3"
+                      required placeholder="Enter a short course description"></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Status</label>
+            <select class="form-select" id="courseStatus">
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+
+          <button class="btn btn-primary" type="submit" id="saveCourseBtn">Add Course</button>
+          <button class="btn btn-outline-secondary ms-2" type="button" id="cancelEditBtn" hidden>
+            Cancel Edit
+          </button>
+        </form>
+      </div>
+</section>
+<!-- Course management -->
+<section class="section-view" id="view-courses">
+  <div class="panel">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+      <h2 class="mb-0">All Courses</h2>
+      <input id="courseSearch" class="form-control" style="max-width:280px"
+             placeholder="Search courses...">
+    </div>
+    <div class="row g-3" id="courseList"></div>
+  </div>
+
+  <!-- Enrolled Students Panel -->
+  <div class="panel mt-4" id="enrollmentPanel" hidden>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h2 id="enrollmentTitle">Enrolled Students</h2>
+        <p class="muted mb-0">Students enrolled in this course.</p>
+      </div>
+      <button class="btn btn-outline-secondary btn-sm" id="closeEnrollmentBtn">
+        Close
+      </button>
+    </div>
+
+    <h3 class="mb-3">
+      Total Enrolled: <span id="enrollmentCount">0</span>
+    </h3>
+
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Student Name</th>
+            <th>Email</th>
+          </tr>
+        </thead>
+        <tbody id="enrollmentTable">
+          <tr>
+            <td colspan="2" class="text-center">Select a course.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+    <!-- Course content -->
+    <section class="section-view" id="view-content">
+      <div class="panel">
+        <h2>Course Content</h2>
+        <p class="muted">Select a course to manage its lessons and learning resources.</p>
+        <div class="row g-3" id="contentCourseList"></div>
+      </div>
+    </section>
+
+    <!-- Quiz management -->
+    <section class="section-view" id="view-quizzes">
+      <div class="panel">
+        <h2>Create a Quiz</h2>
+        <p class="muted">Quizzes are independent. They are not connected to a course.</p>
+
+        <form id="quizForm">
+          <div class="mb-3">
+            <label class="form-label">Quiz Title</label>
+            <input id="quizTitle" class="form-control" required maxlength="150"
+                   placeholder="e.g. Cloud Computing Basics">
+          </div>
+
+          <div id="questionContainer"></div>
+
+          <div class="d-flex flex-wrap gap-2 mt-3">
+            <button type="button" class="btn btn-outline-primary" id="addQuestionBtn">
+              <i class="fa-solid fa-plus me-1"></i>Add Question
+            </button>
+            <button type="submit" class="btn btn-primary">
+              <i class="fa-solid fa-floppy-disk me-1"></i>Save Quiz
+              </button>
+          </div>
+          <p class="muted mt-3 mb-0">
+            Each question has four options. Choose the correct option and enter marks.
+          </p>
+        </form>
+      </div>
+
+      <div class="panel">
+        <h2>Created Quizzes</h2>
+        <div class="row g-3" id="adminQuizList"></div>
+      </div>
+    </section>
+
+    <!-- Results -->
+    <section class="section-view" id="view-results">
+      <div class="panel">
+        <h2>Quiz Results</h2>
+        <p class="muted">Review submitted quiz attempts from students.</p>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Quiz</th>
+                <th>Score</th>
+                <th>Percentage</th>
+              </tr>
+            </thead>
+            <tbody id="resultsTable">
+              <tr><td colspan="4" class="text-center py-4">Loading results...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Students -->
+    <section class="section-view" id="view-students">
+      <div class="panel">
+        <h2>Registered Students</h2>
+        <p class="muted">Student accounts registered in EduCore.</p>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead><tr><th>Name</th><th>Email</th><th>Role</th></tr></thead>
+            <tbody id="studentsTable">
+              <tr><td colspan="3" class="text-center py-4">Loading students...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Profile -->
+    <section class="section-view" id="view-profile">
+      <div class="panel">
+        <div class="d-flex align-items-center gap-3 mb-4">
+          <div class="avatar" id="profileAvatar" style="width:60px;height:60px">A</div>
+          <div>
+            <h2 class="mb-1" id="profileName">Administrator</h2>
+            <div class="muted">Admin account</div>
+          </div>
+        </div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label muted">Name</label>
+            <div class="form-control bg-light" id="profileNameField">—</div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label muted">Email</label>
+            <div class="form-control bg-light" id="profileEmail">—</div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label muted">Role</label>
+            <div class="form-control bg-light">Administrator</div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label muted">Firebase User ID</label>
+            <div class="form-control bg-light text-break" id="profileUid">—</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { auth, db } from "./firebase.js";
+    import { onAuthStateChanged, signOut } from
+      "https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js";
+    import {
+      collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc,
+      query, where, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
+
+    const $ = id => document.getElementById(id);
+    const safe = value => String(value ?? "").replace(/[&<>"']/g, char => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    })[char]);
+
+    let currentUser = null;
+    let adminName = "Administrator";
+    let courses = [];
+    let quizzes = [];
+    let questionNumber = 0;
+
+    function showView(name) {
+
+    console.log("Opening view:", name);
+      
+
+      document.querySelectorAll(".section-view").forEach(section => {
+        section.classList.toggle("active", section.id === `view-${name}`);
+      });
+
+      document.querySelectorAll(".side-link[data-view]").forEach(button => {
+        button.classList.toggle("active", button.dataset.view === name);
+      });
+      
+      const titles = {
+  dashboard: "Dashboard",
+  "create-course": "Create Course",
+courses: "Manage Courses",
+content: "Course Content",
+quizzes: "Create Quiz",
+  "manage-quizzes": "Manage Quizzes",
+  results: "Quiz Results",
+  students: "Students",
+  profile: "My Profile"
+};
+      $("pageTitle").textContent = titles[name] || "Dashboard";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+
+      if (name === "results") loadResults();
+      if (name === "students") loadStudents();
+    }
+
+    document.querySelectorAll("[data-view]").forEach(button => {
+      button.addEventListener("click", () => showView(button.dataset.view));
+    });
+
+    document.querySelectorAll("[data-go]").forEach(button => {
+      button.addEventListener("click", () => showView(button.dataset.go));
+    });
+
+    $("logoutBtn").addEventListener("click", async () => {
+      await signOut(auth);
+      location.href = "login.html";
+    });
+
+    onAuthStateChanged(auth, async user => {
+      if (!user) {
+        location.href = "login.html";
+        return;
+      }
+
+      currentUser = user;
+
+      try {
+        const userSnap = await getDoc(doc(db, "users", user.uid));
+       if (
+  !userSnap.exists() ||
+  String(userSnap.data().role || "").trim().toLowerCase() !== "admin"
+) {
+          alert("Admin access only.");
+          location.href = "login.html";
+          return;
+        }
+
+        const data = userSnap.data();
+        adminName = data.name || user.displayName || user.email || "Administrator";
+
+        $("welcomeName").textContent = adminName;
+        $("profileAvatar").textContent = adminName.charAt(0).toUpperCase();
+        $("profileName").textContent = adminName;
+        $("profileNameField").textContent = adminName;
+        $("profileEmail").textContent = user.email || "—";
+        $("profileUid").textContent = user.uid;
+
+        await loadCourses();
+        await loadQuizzes();
+        await loadDashboardStats();
+      } catch (error) {
+  console.error("ADMIN DASHBOARD ERROR:", error);
+  alert("Error: " + error.message);
+}
+    });
+
+    async function loadCourses() {
+      const snapshot = await getDocs(collection(db, "courses"));
+      courses = snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
+      renderCourses();
+    }
+
+    async function loadDashboardStats() {
+      $("totalCourses").textContent = courses.length;
+      $("activeCourses").textContent =
+        courses.filter(course => !course.status || course.status === "active").length;
+      $("totalQuizzes").textContent =
+        quizzes.filter(quiz => quiz.published === true).length;
+
+      const usersSnapshot = await getDocs(collection(db, "users"));
+
+const registeredStudents = usersSnapshot.docs.filter(user => {
+  const role = String(user.data().role || "").trim().toLowerCase();
+  return role === "student";
+});
+
+$("totalStudents").textContent = registeredStudents.length;
+
+      $("recentCourses").innerHTML = courses.slice(-3).reverse().map(course => `
+        <div class="col-md-4">
+          <div class="course-card">
+            <div class="action-icon"><i class="fa-solid fa-book"></i></div>
+            <h3>${safe(course.name || course.title || "Untitled Course")}</h3>
+            <p class="muted">${safe(course.description || "No description available.")}</p>
+            <span class="badge ${course.status === "inactive" ? "text-bg-secondary" : "text-bg-success"}">
+              ${safe(course.status || "active")}
+            </span>
+          </div>
+        </div>`).join("") || `<div class="col-12 muted">No courses have been added yet.</div>`;
+    }
+
+    $("courseForm").addEventListener("submit", async event => {
+      event.preventDefault();
+
+      const courseId = $("editCourseId").value;
+      const courseData = {
+        name: $("courseName").value.trim(),
+        description: $("courseDescription").value.trim(),
+        status: $("courseStatus").value
+      };
+
+      if (!courseData.name || !courseData.description) {
+        alert("Please enter the course name and description.");
+        return;
+      }
+
+      try {
+        if (courseId) {
+          await updateDoc(doc(db, "courses", courseId), courseData);
+          alert("Course updated successfully.");
+        } else {
+    await addDoc(collection(db, "courses"), {
+        ...courseData,
+        createdBy: currentUser.uid,
+        createdAt: serverTimestamp()
+    });
+
+    try {
+        const usersSnapshot = await getDocs(collection(db, "users"));
+
+        for (const userDoc of usersSnapshot.docs) {
+            if (String(userDoc.data().role || "").toLowerCase() !== "student") {
+                continue;
+            }
+
+            await addDoc(
+                collection(db, "users", userDoc.id, "notifications"),
+                {
+                    title: "New Course Available",
+                    message: `A new course "${courseData.name}" has been added. Explore it now!`,
+                    type: "course",
+                    read: false,
+                    createdAt: new Date()
+                }
+            );
+        }
+    } catch (notificationError) {
+        console.error("Course notification error:", notificationError);
+    }
+
+    alert("Course added successfully.");
+}
+
+        resetCourseForm();
+        await loadCourses();
+        await loadDashboardStats();
+      } catch (error) {
+        console.error(error);
+        alert("Could not save the course. Check your Firestore rules.");
+      }
+    });
+
+    function resetCourseForm() {
+      $("courseForm").reset();
+      $("editCourseId").value = "";
+      $("courseFormTitle").textContent = "Add New Course";
+      $("saveCourseBtn").textContent = "Add Course";
+      $("cancelEditBtn").hidden = true;
+    }
+
+    $("cancelEditBtn").addEventListener("click", resetCourseForm);
+
+    function renderCourses() {
+      const search = ($("courseSearch").value || "").toLowerCase();
+
+      const filtered = courses.filter(course =>
+        String(course.name || course.title || "").toLowerCase().includes(search)
+      );
+
+      $("courseList").innerHTML = filtered.map(course => `
+        <div class="col-md-6 col-xl-4">
+          <div class="course-card">
+            <div class="action-icon"><i class="fa-solid fa-book-open"></i></div>
+            <h3>${safe(course.name || course.title || "Untitled Course")}</h3>
+            <p class="muted">${safe(course.description || "No description available.")}</p>
+            <div class="mb-3">
+              <span class="badge ${course.status === "inactive" ? "text-bg-secondary" : "text-bg-success"}">
+                ${safe(course.status || "active")}
+              </span>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+              <button class="btn btn-outline-primary btn-sm" data-edit="${safe(course.id)}">
+                Edit
+              </button>
+              <button class="btn btn-outline-success btn-sm" data-enrolled="${safe(course.id)}">
+  Enrolled Students
+</button>
+              <a class="btn btn-outline-secondary btn-sm"
+                 href="manage-content.html?courseId=${encodeURIComponent(course.id)}">
+                Manage Content
+              </a>
+              <button class="btn btn-outline-danger btn-sm" data-delete="${safe(course.id)}">
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>`).join("") || `<div class="col-12"><div class="empty-state">No courses found.</div></div>`;
+
+      $("contentCourseList").innerHTML = courses.map(course => `
+        <div class="col-md-6 col-xl-4">
+          <div class="course-card">
+            <div class="action-icon"><i class="fa-solid fa-folder-open"></i></div>
+            <h3>${safe(course.name || course.title || "Untitled Course")}</h3>
+            <p class="muted">${safe(course.description || "Manage course modules and lessons.")}</p>
+            <a class="btn btn-primary btn-sm"
+               href="manage-content.html?courseId=${encodeURIComponent(course.id)}">
+              Manage Content
+            </a>
+          </div>
+        </div>`).join("") || `<div class="col-12 muted">Add a course to manage its content.</div>`;
+
+      document.querySelectorAll("[data-edit]").forEach(button => {
+        button.addEventListener("click", () => editCourse(button.dataset.edit));
+      });
+
+      document.querySelectorAll("[data-delete]").forEach(button => {
+        button.addEventListener("click", () => removeCourse(button.dataset.delete));
+      });
+      document.querySelectorAll("[data-enrolled]").forEach(button => {
+  button.addEventListener("click", () => {
+    showEnrolledStudents(button.dataset.enrolled);
+  });
+});
+    }
+
+    $("courseSearch").addEventListener("input", renderCourses);
+$("closeEnrollmentBtn").addEventListener("click", () => {
+  $("enrollmentPanel").hidden = true;
+});
+
+async function showEnrolledStudents(courseId) {
+  const course = courses.find(item => item.id === courseId);
+  if (!course) return;
+
+  $("enrollmentPanel").hidden = false;
+  $("enrollmentTitle").textContent =
+    `Enrolled Students — ${course.name || course.title || "Course"}`;
+
+  $("enrollmentCount").textContent = "Loading...";
+  $("enrollmentTable").innerHTML =
+    `<tr><td colspan="2">Loading students...</td></tr>`;
+
+  try {
+    const q = query(
+      collection(db, "enrollments"),
+      where("courseId", "==", courseId)
+    );
+
+    const snapshot = await getDocs(q);
+
+    const students = snapshot.docs.map(item => item.data());
+
+    $("enrollmentCount").textContent = students.length;
+
+    $("enrollmentTable").innerHTML = students.map(student => `
+      <tr>
+        <td>${safe(student.studentName || "Student")}</td>
+        <td>${safe(student.studentEmail || "—")}</td>
+      </tr>
+    `).join("") ||
+      `<tr><td colspan="2" class="text-center">No students enrolled yet.</td></tr>`;
+
+    $("enrollmentPanel").scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+
+  } catch (error) {
+    console.error("Enrollment error:", error);
+
+    $("enrollmentTable").innerHTML =
+      `<tr><td colspan="2" class="text-danger">Could not load students.</td></tr>`;
+  }
+}function editCourse(id) {
+  const course = courses.find(item => item.id === id);
+  if (!course) return;
+
+  showView("create-course");
+
+  $("editCourseId").value = id;
+  $("courseName").value = course.name || course.title || "";
+  $("courseDescription").value = course.description || "";
+  $("courseStatus").value = course.status || "active";
+
+  $("courseFormTitle").textContent = "Edit Course";
+  $("saveCourseBtn").textContent = "Save Changes";
+  $("cancelEditBtn").hidden = false;
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+    async function removeCourse(id) {
+      if (!confirm("Delete this course? Its nested modules and lessons may need to be deleted separately.")) return;
+
+      try {
+        await deleteDoc(doc(db, "courses", id));
+        await loadCourses();
+        await loadDashboardStats();
+      } catch (error) {
+        console.error(error);
+        alert("Could not delete this course.");
+      }
+    }
+
+    function addQuestion() {
+      questionNumber++;
+      const number = questionNumber;
+
+      const div = document.createElement("div");
+      div.className = "question-box";
+      div.dataset.question = String(number);
+
+      div.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h3 class="mb-0">Question ${number}</h3>
+          <button type="button" class="btn btn-sm btn-outline-danger remove-question">
+            Remove
+          </button>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Question Text</label>
+          <input class="form-control question-text" required maxlength="500"
+                 placeholder="Enter your question">
+        </div>
+        <div class="row g-2">
+          ${[0,1,2,3].map(i => `
+            <div class="col-md-6">
+              <label class="form-label">Option ${i + 1}</label>
+              <input class="form-control question-option" required maxlength="250"
+                     placeholder="Enter option ${i + 1}">
+            </div>`).join("")}
+        </div>
+        <div class="row g-3 mt-1">
+          <div class="col-md-6">
+            <label class="form-label">Correct Option</label>
+            <select class="form-select correct-index">
+              <option value="0">Option 1</option>
+              <option value="1">Option 2</option>
+              <option value="2">Option 3</option>
+              <option value="3">Option 4</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Marks</label>
+            <input type="number" class="form-control question-marks"
+                   min="1" max="100" value="1" required>
+          </div>
+        </div>`;
+
+      div.querySelector(".remove-question").addEventListener("click", () => {
+        div.remove();
+        renumberQuestions();
+      });
+
+      $("questionContainer").appendChild(div);
+      renumberQuestions();
+    }
+
+    function renumberQuestions() {
+      [...$("questionContainer").querySelectorAll(".question-box")].forEach((box, index) => {
+        box.querySelector("h3").textContent = `Question ${index + 1}`;
+      });
+    }
+
+    $("addQuestionBtn").addEventListener("click", addQuestion);
+    addQuestion();
+
+    $("quizForm").addEventListener("submit", async event => {
+      event.preventDefault();
+
+      const title = $("quizTitle").value.trim();
+      const questionBoxes = [...$("questionContainer").querySelectorAll(".question-box")];
+
+      if (!title || !questionBoxes.length) {
+        alert("Enter a quiz title and add at least one question.");
+        return;
+      }
+
+      const questions = questionBoxes.map(box => ({
+        text: box.querySelector(".question-text").value.trim(),
+        options: [...box.querySelectorAll(".question-option")].map(input => input.value.trim()),
+        correctIndex: Number(box.querySelector(".correct-index").value),
+        marks: Number(box.querySelector(".question-marks").value)
+      }));
+
+      if (questions.some(question =>
+        !question.text ||
+        question.options.some(option => !option) ||
+        !Number.isFinite(question.marks) || question.marks < 1
+      )) {
+        alert("Complete every question, all four options and marks.");
+        return;
+      }
+
+      try {
+        await addDoc(collection(db, "quizzes"), {
+          title,
+          questions,
+          published: false,
+          createdBy: currentUser.uid,
+          createdAt: serverTimestamp()
+        });
+
+        alert("Quiz saved as a draft. Publish it when it is ready.");
+        $("quizForm").reset();
+        $("questionContainer").innerHTML = "";
+        questionNumber = 0;
+        addQuestion();
+        await loadQuizzes();
+        await loadDashboardStats();
+      } catch (error) {
+        console.error(error);
+        alert("Could not save the quiz. Check your Firestore rules.");
+      }
+    });
+
+    async function loadQuizzes() {
+      const snapshot = await getDocs(collection(db, "quizzes"));
+      quizzes = snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
+
+      $("adminQuizList").innerHTML = quizzes.map(quiz => `
+        <div class="col-md-6 col-xl-4">
+          <div class="quiz-card">
+            <div class="action-icon"><i class="fa-solid fa-clipboard-question"></i></div>
+            <h3>${safe(quiz.title || "Untitled Quiz")}</h3>
+            <p class="muted">${(quiz.questions || []).length} questions</p>
+            <div class="mb-3">
+              <span class="badge ${quiz.published ? "text-bg-success" : "text-bg-secondary"}">
+                ${quiz.published ? "Published" : "Draft"}
+              </span>
+            </div>
+           <div class="d-flex flex-wrap gap-2">
+  <button class="btn btn-outline-primary btn-sm"
+          data-publish="${safe(quiz.id)}"
+          data-state="${quiz.published ? "true" : "false"}">
+    ${quiz.published ? "Unpublish" : "Publish"}
+  </button>
+
+  <button class="btn btn-outline-danger btn-sm"
+          data-delete-quiz="${safe(quiz.id)}">
+    Delete
+  </button>
+</div>
+          </div>
+        </div>`).join("") || `<div class="col-12 muted">No quizzes have been created yet.</div>`;
+
+      document.querySelectorAll("[data-publish]").forEach(button => {
+        button.addEventListener("click", () =>
+          changePublishState(button.dataset.publish, button.dataset.state === "true"));
+      });
+
+      document.querySelectorAll("[data-delete-quiz]").forEach(button => {
+        button.addEventListener("click", () => deleteQuiz(button.dataset.deleteQuiz));
+      });
+    }
+
+    async function changePublishState(id, currentlyPublished) {
+      try {
+        await updateDoc(doc(db, "quizzes", id), { published: !currentlyPublished });
+        await loadQuizzes();
+        await loadDashboardStats();
+      } catch (error) {
+        console.error(error);
+        alert("Could not update quiz status.");
+      }
+    }
+
+    async function deleteQuiz(id) {
+      if (!confirm("Delete this quiz? Existing attempts in quizAttempts will remain.")) return;
+
+      try {
+        await deleteDoc(doc(db, "quizzes", id));
+        await loadQuizzes();
+        await loadDashboardStats();
+      } catch (error) {
+        console.error(error);
+        alert("Could not delete quiz.");
+      }
+    }
+
+    async function loadResults() {
+      $("resultsTable").innerHTML =
+        `<tr><td colspan="4" class="text-center py-4">Loading results...</td></tr>`;
+
+      try {
+        const snapshot = await getDocs(collection(db, "quizAttempts"));
+        const attempts = snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
+
+        $("resultsTable").innerHTML = attempts.map(attempt => {
+          const percentage = Number(attempt.totalMarks)
+            ? Math.round(Number(attempt.score) / Number(attempt.totalMarks) * 100)
+            : 0;
+
+          return `
+            <tr>
+              <td>
+                <div class="fw-semibold">${safe(attempt.studentName || "Student")}</div>
+                <div class="muted">${safe(attempt.studentId || "")}</div>
+              </td>
+              <td>${safe(attempt.quizTitle || "Quiz")}</td>
+              <td>${Number(attempt.score) || 0} / ${Number(attempt.totalMarks) || 0}</td>
+              <td><span class="badge text-bg-light">${percentage}%</span></td>
+            </tr>`;
+        }).join("") || `<tr><td colspan="4" class="text-center py-4">No quiz attempts submitted yet.</td></tr>`;
+      } catch (error) {
+        console.error(error);
+        $("resultsTable").innerHTML =
+          `<tr><td colspan="4" class="text-danger">Could not load results. Check Firestore rules.</td></tr>`;
+      }
+    }
+
+    
+async function loadStudents() {
+  $("studentsTable").innerHTML =
+    `<tr><td colspan="3" class="text-center py-4">Loading students...</td></tr>`;
+
+  try {
+    // Read user profiles from Firestore
+    const snapshot = await getDocs(collection(db, "users"));
+
+    // Recognize student roles even if capitalization differs
+    const students = snapshot.docs
+      .map(item => ({ id: item.id, ...item.data() }))
+      .filter(user =>
+        String(user.role || "").trim().toLowerCase() === "student"
+      )
+      .sort((a, b) =>
+        String(a.name || "").localeCompare(String(b.name || ""))
+      );
+
+    $("studentsTable").innerHTML = students.map(student => `
+      <tr>
+        <td>${safe(student.name || "Student")}</td>
+        <td>${safe(student.email || "—")}</td>
+        <td><span class="badge text-bg-light">Student</span></td>
+      </tr>
+    `).join("") || `
+      <tr>
+        <td colspan="3" class="text-center py-4">
+          No student accounts found in the Firestore users collection.
+        </td>
+      </tr>
+    `;
+  } catch (error) {
+    console.error("Error loading registered students:", error);
+
+    $("studentsTable").innerHTML = `
+      <tr>
+        <td colspan="3" class="text-danger">
+          Could not load students. Check Firestore rules and the browser console.
+        </td>
+      </tr>
+    `;
+  }
+}
+  </script>
+</body>
+</html>

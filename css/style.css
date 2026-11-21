@@ -1,0 +1,517 @@
+
+:root {
+    --primary: #24304a;
+    --primary-dark:#19243b;
+    --sidebar: #172033;
+    --sidebar-hover: #24304a;
+    --bg: #f6f7fb;
+    --text: #202637;
+    --muted: #747b8c;
+    --border: #e6e8ee;
+    --white: #ffffff;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Arial, sans-serif;
+}
+
+/* SIDEBAR */
+
+.dashboard-layout {
+    min-height: 100vh;
+    display: flex;
+}
+
+.sidebar {
+    width: 245px;
+    min-height: 100vh;
+    background: var(--sidebar);
+    color: white;
+    position: fixed;
+    inset: 0 auto 0 0;
+    padding: 25px 15px;
+    z-index: 1000;
+}
+
+.brand {
+    font-size: 24px;
+    font-weight: 700;
+    padding: 0 15px 30px;
+    letter-spacing: 0.3px;
+}
+
+.brand span {
+    display: block;
+    margin-top: 3px;
+    color: #aeb6c8;
+    font-size: 12px;
+    font-weight: 400;
+}
+
+.sidebar-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 12px 15px;
+    border-radius: 8px;
+    color: #c7ccda;
+    text-decoration: none;
+    font-size: 15px;
+    transition: 0.2s;
+}
+
+.sidebar-link:hover,
+.sidebar-link.active {
+    background: var(--sidebar-hover);
+    color: white;
+}
+
+.sidebar-link.logout {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #30394d;
+    border-radius: 0;
+}
+
+/* MAIN CONTENT */
+
+.main-content {
+    width: calc(100% - 245px);
+    margin-left: 245px;
+    padding: 38px 45px;
+}
+
+.welcome-section {
+    margin-bottom: 30px;
+}
+
+.welcome-section h2 {
+    margin-bottom: 5px;
+    font-size: 30px;
+}
+
+.welcome-section p,
+.course-card p {
+    color: var(--muted);
+}
+
+.welcome-section p {
+    margin: 0;
+}
+
+/* STAT CARDS */
+
+.stat-card,
+.course-card,
+.ec-feature-card {
+    height: 100%;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    transition: 0.2s ease;
+}
+
+.stat-card {
+    padding: 22px;
+}
+
+.stat-card:hover,
+.course-card:hover,
+.ec-feature-card:hover {
+    transform: translateY(-3px);
+}
+
+.stat-number {
+    margin-bottom: 5px;
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.stat-label {
+    color: var(--muted);
+    font-size: 14px;
+}
+
+/* DASHBOARD SECTIONS */
+
+.dashboard-section {
+    margin-top: 35px;
+}
+
+.dashboard-section h4 {
+    margin-bottom: 18px;
+    font-size: 20px;
+}
+
+/* COURSE CARDS */
+
+.course-card {
+    padding: 20px;
+}
+
+.course-card:hover,
+.ec-feature-card:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.07);
+}
+
+.course-card h5 {
+    margin-bottom: 8px;
+    font-size: 18px;
+}
+
+.course-card p {
+    font-size: 14px;
+}
+
+.progress {
+    height: 7px;
+    border-radius: 10px;
+}
+
+/* SEARCH */
+
+.search-box {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}
+
+/* COMMON BUTTONS AND FORMS */
+
+.btn-primary {
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark);
+    border-color: var(--primary-dark);
+}
+
+.form-control,
+.form-select {
+    border-color: #dfe2e8;
+    border-radius: 8px;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 0.2rem rgba(49, 87, 213, 0.12);
+}
+
+/* LANDING PAGE */
+
+.ec-topbar {
+    padding: 18px 0;
+    background: var(--sidebar);
+}
+
+.ec-topbar .container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.ec-topbar-brand {
+    color: white;
+    font-size: 25px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-decoration: none;
+}
+
+.ec-topbar-brand:hover {
+    color: white;
+}
+
+.ec-topbar-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.ec-hero {
+    padding: 95px 0;
+    background: #f7f8fb;
+    border-bottom: 1px solid var(--border);
+}
+
+.ec-label {
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1.4px;
+}
+
+.ec-hero-title {
+    margin-top: 15px;
+    color: var(--sidebar);
+    font-size: 52px;
+    line-height: 1.1;
+    font-weight: 700;
+}
+
+.ec-hero-text {
+    max-width: 650px;
+    margin-top: 20px;
+    color: #687083;
+    font-size: 17px;
+    line-height: 1.7;
+}
+
+.ec-hero .btn-primary {
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+.ec-hero .btn-primary:hover {
+    background: var(--primary-dark);
+    border-color: var(--primary-dark);
+}
+
+/* FEATURES */
+
+.ec-features {
+    padding: 75px 0;
+    background: white;
+}
+
+.ec-features h2 {
+    color: var(--sidebar);
+    font-weight: 700;
+}
+
+.ec-feature-card {
+    padding: 30px;
+}
+
+.ec-icon {
+    margin-bottom: 18px;
+    font-size: 28px;
+}
+
+.ec-feature-card h5 {
+    color: var(--sidebar);
+}
+
+.ec-feature-card p {
+    margin-bottom: 0;
+    color: var(--muted);
+    line-height: 1.6;
+}
+
+/* AUTHENTICATION PAGES */
+
+.ec-auth-section {
+    min-height: calc(100vh - 150px);
+    display: flex;
+    align-items: center;
+    padding: 60px 0;
+    background: #f7f8fb;
+}
+
+.ec-auth-card {
+    padding: 38px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05);
+}
+
+.ec-auth-card h2 {
+    color: var(--sidebar);
+    font-weight: 700;
+}
+
+.ec-auth-card p {
+    color: var(--muted);
+}
+
+.ec-auth-card .form-label {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.ec-auth-card .form-control {
+    padding: 11px 13px;
+}
+
+.ec-auth-card a {
+    color: var(--primary);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.ec-auth-card a:hover {
+    color: var(--primary-dark);
+}
+
+/* FOOTER */
+
+.ec-footer {
+    padding: 30px 0;
+    background: var(--sidebar);
+    color: white;
+}
+
+.ec-footer p {
+    margin: 5px 0 0;
+    color: #aeb6c8;
+    font-size: 14px;
+}
+
+/* RESPONSIVE DESIGN */
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: 75px;
+        padding: 20px 8px;
+    }
+
+    .brand {
+        padding: 0 0 25px;
+        font-size: 18px;
+        text-align: center;
+    }
+
+    .brand span {
+        display: none;
+    }
+
+    .sidebar-link {
+        justify-content: center;
+        padding: 12px 5px;
+        font-size: 0;
+    }
+
+    .sidebar-link span {
+        font-size: 20px;
+    }
+
+    .main-content {
+        width: calc(100% - 75px);
+        margin-left: 75px;
+        padding: 25px 18px;
+    }
+
+    .welcome-section h2 {
+        font-size: 24px;
+    }
+
+    .ec-topbar .container {
+        padding-right: 18px;
+        padding-left: 18px;
+    }
+
+    .ec-topbar-brand {
+        font-size: 21px;
+    }
+
+    .ec-topbar-buttons .btn {
+        padding: 6px 12px;
+        font-size: 13px;
+    }
+
+    .ec-hero {
+        padding: 60px 0;
+    }
+
+    .ec-hero-title {
+        font-size: 38px;
+    }
+
+    .ec-auth-card {
+        padding: 25px;
+    }
+}
+
+
+/* Scoped consistency helpers for Manage Course Content only.
+   Other pages are unaffected unless they opt in with this body class. */
+body.ec-consistent-page {
+    font-family: Arial, Helvetica, sans-serif;
+    color: #24304a;
+}
+
+body.ec-consistent-page .ec-heading-bar,
+body.ec-consistent-page .ec-section-heading {
+    display: block;
+    background: #24304a;
+    color: #ffffff;
+    padding: 12px 16px;
+    border-radius: 9px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+body.ec-consistent-page .ec-heading-bar {
+    margin-bottom: 18px;
+}
+
+body.ec-consistent-page .ec-section-heading {
+    margin-bottom: 18px;
+}
+
+body.ec-consistent-page .btn-primary {
+    background: #24304a;
+    border-color: #24304a;
+    border-radius: 8px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 8px 14px;
+}
+
+body.ec-consistent-page .btn-primary:hover,
+body.ec-consistent-page .btn-primary:focus {
+    background: #19243b;
+    border-color: #19243b;
+}
+
+body.ec-consistent-page .btn-outline-secondary {
+    background: #ffffff;
+    color: #24304a;
+    border: 1px solid #24304a;
+    border-radius: 8px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+body.ec-consistent-page .btn-outline-secondary:hover,
+body.ec-consistent-page .btn-outline-secondary:focus {
+    background: #edf1f7;
+    color: #19243b;
+    border-color: #24304a;
+}
+
+body.ec-consistent-page .form-control,
+body.ec-consistent-page .form-select {
+    border-color: #dfe2e8;
+    border-radius: 8px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14px;
+}
+
+body.ec-consistent-page .form-control:focus,
+body.ec-consistent-page .form-select:focus {
+    border-color: #24304a;
+    box-shadow: 0 0 0 0.2rem rgba(36, 48, 74, 0.12);
+}

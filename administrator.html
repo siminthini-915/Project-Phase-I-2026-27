@@ -1,0 +1,208 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EduCore - Administrator</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+  <div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2>Administrator Panel</h2>
+      <button id="logoutBtn" class="btn btn-outline-danger">Logout</button>
+    </div>
+
+    <div class="card p-3">
+      <h5>User & Role Management</h5>
+      <input id="searchInput" class="form-control my-3"
+             placeholder="Search by name or email">
+
+      <div id="status" class="mb-2 text-muted">Loading users...</div>
+      <div class="table-responsive">
+        <table class="table table-bordered align-middle bg-white">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Current Role</th>
+              <th>Change Role</th>
+              <th>Teaching Access</th>
+            </tr>
+          </thead>
+          <tbody id="userTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+<script type="module">
+import { auth, db } from "./firebase.js";
+import {
+  onAuthStateChanged, signOut
+} from "https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js";
+import {
+  collection, doc, getDoc, getDocs, updateDoc
+} from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
+
+const $ = id => document.getElementById(id);
+let users = [];
+let currentUser = null;
+
+onAuthStateChanged(auth, async user => {
+  if (!user) {
+    location.href = "login.html";
+    return;
+  }
+
+  currentUser = user;
+
+  try {
+    const adminSnap = await getDoc(doc(db, "users", user.uid));
+
+    if (!adminSnap.exists() || adminSnap.data().role !== "admin") {
+      alert("Administrator access required.");
+      location.href = "login.html";
+      return;
+    }
+
+    await loadUsers();
+  } catch (error) {
+    console.error(error);
+    $("status").textContent = "Could not load users. Check Firestore rules.";
+  }
+});
+
+async function loadUsers() {
+  const snapshot = await getDocs(collection(db, "users"));
+  users = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+  renderUsers();
+}
+
+function renderUsers() {
+  const query = $("searchInput").value.trim().toLowerCase();
+  const filtered = users.filter(u =>
+    String(u.email || "").toLowerCase().includes(query) ||
+    String(u.name || u.fullName || "").toLowerCase().includes(query)
+  );
+
+  $("status").textContent = `${filtered.length} user(s) found`;
+  $("userTable").replaceChildren();
+
+  filtered.forEach(u => {
+    const tr = document.createElement("tr");
+    const name = u.name || u.fullName || "—";
+    const role = String(u.role || "student").toLowerCase();
+    const approved = u.teachingAccessApproved === true;
+
+    function cell(value) {
+      const td = document.createElement("td");
+      td.textContent = value;
+      tr.appendChild(td);
+      return td;
+    }
+
+    cell(name);
+    cell(u.email || "Email unavailable");
+    cell(role);
+
+    const roleCell = document.createElement("td");
+    const select = document.createElement("select");
+    select.className = "form-select form-select-sm";
+
+    ["student", "faculty", "admin"].forEach(r => {
+      const option = document.createElement("option");
+      option.value = r;
+      option.textContent = r[0].toUpperCase() + r.slice(1);
+      option.selected = role === r;
+      select.appendChild(option);
+    });
+
+    const save = document.createElement("button");
+    save.className = "btn btn-sm btn-primary mt-2";
+    save.textContent = "Save Role";
+    save.disabled = u.id === currentUser.uid;
+
+    save.addEventListener("click", async () => {
+      const newRole = select.value;
+
+      if (u.id === currentUser.uid) {
+        alert("You cannot change your own role here.");
+        return;
+      }
+
+      if (!confirm(`Change ${u.email || name} role to ${newRole}?`)) return;
+
+      save.disabled = true;
+      try {
+        const changes = { role: newRole };
+
+        // Faculty approval is separate from the role.
+        if (newRole !== "faculty") {
+          changes.teachingAccessApproved = false;
+        } else if (role !== "faculty") {
+          changes.teachingAccessApproved = false;
+        }
+
+        await updateDoc(doc(db, "users", u.id), changes);
+        alert("Role updated.");
+        await loadUsers();
+      } catch (error) {
+        console.error(error);
+        alert("Role update failed. Check Firestore Security Rules.");
+      } finally {
+        save.disabled = false;
+      }
+    });
+
+    roleCell.append(select, save);
+    tr.appendChild(roleCell);
+
+    const accessCell = document.createElement("td");
+
+    if (role === "faculty") {
+      const accessButton = document.createElement("button");
+      accessButton.className = "btn btn-sm " +
+        (approved ? "btn-outline-danger" : "btn-success");
+      accessButton.textContent = approved ? "Revoke Access" : "Approve Teaching";
+
+      accessButton.addEventListener("click", async () => {
+        const next = !approved;
+        if (!confirm(`${next ? "Approve" : "Revoke"} teaching access for ${u.email || name}?`)) return;
+
+        accessButton.disabled = true;
+        try {
+          await updateDoc(doc(db, "users", u.id), {
+            teachingAccessApproved: next
+          });
+          await loadUsers();
+        } catch (error) {
+          console.error(error);
+          alert("Approval failed. Check Firestore Security Rules.");
+        } finally {
+          accessButton.disabled = false;
+        }
+      });
+
+      accessCell.appendChild(accessButton);
+    } else {
+      accessCell.textContent = role === "admin"
+        ? "Administrator"
+        : "Faculty role required";
+    }
+
+    tr.appendChild(accessCell);
+    $("userTable").appendChild(tr);
+  });
+}
+
+$("searchInput").addEventListener("input", renderUsers);
+
+$("logoutBtn").addEventListener("click", async () => {
+  await signOut(auth);
+  location.href = "login.html";
+});
+</script>
+</body>
+</html>

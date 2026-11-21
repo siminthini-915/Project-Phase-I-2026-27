@@ -1,0 +1,486 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Sign Up - EduCore</title>
+
+    <!-- Bootstrap -->
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+
+    <!-- EduCore Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- Compact Signup Design -->
+    <style>
+        /* Reduce top and bottom space around signup section */
+        .ec-auth-section {
+            padding-top: 12px !important;
+            padding-bottom: 12px !important;
+        }
+
+        /* Make signup box shorter */
+        .ec-auth-card {
+            padding: 18px 26px !important;
+        }
+
+        /* Reduce heading section spacing */
+        .ec-auth-card .text-center.mb-4 {
+            margin-bottom: 10px !important;
+        }
+
+        .ec-auth-card h2 {
+            margin-top: 6px !important;
+            margin-bottom: 6px !important;
+            font-size: 1.5rem;
+        }
+
+        .ec-auth-card p {
+            margin-bottom: 8px;
+        }
+
+        /* Reduce spacing between form fields */
+        .ec-auth-card .mb-3 {
+            margin-bottom: 8px !important;
+        }
+
+        .ec-auth-card .form-label {
+            margin-bottom: 3px;
+        }
+
+        /* Reduce input height */
+        .ec-auth-card .form-control {
+            padding: 6px 10px;
+            min-height: 34px;
+            font-size: 14px;
+        }
+
+        /* Reduce button spacing */
+        .ec-auth-card #signupBtn {
+            margin-top: 4px !important;
+            padding: 7px 12px;
+        }
+
+        /* Reduce space above login link */
+        .ec-auth-card .text-center.mt-4 {
+            margin-top: 10px !important;
+        }
+
+        /* Keep the card comfortable on small screens */
+        @media (max-width: 576px) {
+            .ec-auth-card {
+                padding: 16px 18px !important;
+            }
+
+            .ec-auth-card h2 {
+                font-size: 1.35rem;
+            }
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <!-- TOP BRAND BAR -->
+    <nav class="ec-topbar">
+
+        <div class="container">
+
+            <a href="index.html" class="ec-topbar-brand">
+                EduCore
+            </a>
+
+            <div class="ec-topbar-buttons">
+
+                <a
+                    href="index.html"
+                    class="btn btn-outline-light"
+                >
+                    Home
+                </a>
+
+                <a
+                    href="login.html"
+                    class="btn btn-light"
+                >
+                    Login
+                </a>
+
+            </div>
+
+        </div>
+
+    </nav>
+
+
+    <!-- SIGNUP SECTION -->
+    <section class="ec-auth-section">
+
+        <div class="container">
+
+            <div class="row justify-content-center">
+
+                <div class="col-md-6 col-lg-5">
+
+                    <div class="ec-auth-card">
+
+                        <div class="text-center mb-4">
+
+                            <span class="ec-label">
+                                STUDENT REGISTRATION
+                            </span>
+
+                            <h2 class="mt-2">
+                                Create Your Account
+                            </h2>
+
+                            <p>
+                                Sign up to start learning with EduCore.
+                            </p>
+
+                        </div>
+
+
+                        <!-- MESSAGE -->
+                        <div
+                            id="message"
+                            class="alert d-none"
+                            role="alert"
+                            aria-live="polite"
+                        ></div>
+
+
+                        <!-- SIGNUP FORM -->
+                        <form id="signupForm">
+
+                            <!-- FULL NAME -->
+                            <div class="mb-3">
+
+                                <label
+                                    for="name"
+                                    class="form-label"
+                                >
+                                    Full Name
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="name"
+                                    class="form-control"
+                                    placeholder="Enter your full name"
+                                    minlength="2"
+                                    maxlength="50"
+                                    autocomplete="name"
+                                    required
+                                >
+
+                            </div>
+
+
+                            <!-- EMAIL -->
+                            <div class="mb-3">
+
+                                <label
+                                    for="email"
+                                    class="form-label"
+                                >
+                                    Email Address
+                                </label>
+
+                                <input
+                                    type="email"
+                                    id="email"
+                                    class="form-control"
+                                    placeholder="Enter your email"
+                                    autocomplete="email"
+                                    required
+                                >
+
+                            </div>
+
+
+                            <!-- PASSWORD -->
+                            <div class="mb-3">
+
+                                <label
+                                    for="password"
+                                    class="form-label"
+                                >
+                                    Password
+                                </label>
+
+                                <input
+                                    type="password"
+                                    id="password"
+                                    class="form-control"
+                                    placeholder="Minimum 6 characters"
+                                    minlength="6"
+                                    autocomplete="new-password"
+                                    required
+                                >
+
+                            </div>
+
+
+                            <!-- CONFIRM PASSWORD -->
+                            <div class="mb-3">
+
+                                <label
+                                    for="confirmPassword"
+                                    class="form-label"
+                                >
+                                    Confirm Password
+                                </label>
+
+                                <input
+                                    type="password"
+                                    id="confirmPassword"
+                                    class="form-control"
+                                    placeholder="Re-enter your password"
+                                    autocomplete="new-password"
+                                    required
+                                >
+
+                            </div>
+
+
+                            <!-- SIGNUP BUTTON -->
+                            <button
+                                type="submit"
+                                id="signupBtn"
+                                class="btn btn-primary w-100 mt-2"
+                            >
+                                Create Account
+                            </button>
+
+                        </form>
+
+
+                        <!-- LOGIN LINK -->
+                        <div class="text-center mt-4">
+
+                            <p class="mb-0">
+                                Already have an account?
+
+                                <a href="login.html">
+                                    Login
+                                </a>
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- FOOTER -->
+    <footer class="ec-footer">
+
+        <div class="container text-center">
+
+            <strong>
+                EduCore
+            </strong>
+
+            <p>
+                Learning Management System
+            </p>
+
+        </div>
+
+    </footer>
+
+
+    <!-- SIGNUP JAVASCRIPT -->
+    <script type="module">
+
+        import { auth, db } from "./firebase.js";
+
+        import {
+            createUserWithEmailAndPassword,
+            sendEmailVerification
+        } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js";
+
+        import {
+            doc,
+            setDoc
+        } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
+
+
+        const form = document.getElementById("signupForm");
+        const message = document.getElementById("message");
+        const signupBtn = document.getElementById("signupBtn");
+
+
+        form.addEventListener("submit", async (e) => {
+
+            e.preventDefault();
+
+            hideMessage();
+
+            const name =
+                document.getElementById("name").value.trim();
+
+            const email =
+                document.getElementById("email").value.trim();
+
+            const password =
+                document.getElementById("password").value;
+
+            const confirmPassword =
+                document.getElementById("confirmPassword").value;
+
+
+            // Name validation
+            if (name.length < 2) {
+                showError("Name must contain at least 2 characters.");
+                return;
+            }
+
+            if (!/^[A-Za-z]+(?:\s+[A-Za-z]+)*$/.test(name)) {
+                showError("Name can contain letters and spaces only.");
+                return;
+            }
+
+
+            // Password validation
+            if (password.length < 6) {
+                showError("Password must contain at least 6 characters.");
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showError("Passwords do not match.");
+                return;
+            }
+
+
+            signupBtn.disabled = true;
+            signupBtn.textContent = "Creating Account...";
+
+
+            try {
+
+                const userCredential =
+                    await createUserWithEmailAndPassword(
+                        auth,
+                        email,
+                        password
+                    );
+
+                const user = userCredential.user;
+
+
+                // Save student profile in Firestore
+                await setDoc(doc(db, "users", user.uid), {
+
+                    name: name,
+                    email: email,
+                    role: "student"
+
+                });
+
+
+                // Send verification email
+                await sendEmailVerification(user);
+
+
+                showSuccess(
+                    "Account created! Please verify your email before logging in."
+                );
+
+                form.reset();
+
+
+            } catch (error) {
+
+                console.error("FIREBASE ERROR:", error);
+
+
+                if (error.code === "auth/email-already-in-use") {
+
+                    showError(
+                        "This email is already registered. Please login."
+                    );
+
+                } else if (error.code === "auth/invalid-email") {
+
+                    showError(
+                        "Please enter a valid email address."
+                    );
+
+                } else if (error.code === "auth/weak-password") {
+
+                    showError(
+                        "Password is too weak. Use at least 6 characters."
+                    );
+
+                } else if (error.code === "auth/network-request-failed") {
+
+                    showError(
+                        "Network error. Please check your internet connection."
+                    );
+
+                } else {
+
+                    showError(
+                        "Something went wrong. Please try again."
+                    );
+
+                }
+
+            } finally {
+
+                signupBtn.disabled = false;
+                signupBtn.textContent = "Create Account";
+
+            }
+
+        });
+
+
+        function showError(text) {
+
+            message.textContent = text;
+            message.className = "alert alert-danger";
+            message.classList.remove("d-none");
+
+        }
+
+
+        function showSuccess(text) {
+
+            message.textContent = text;
+            message.className = "alert alert-success";
+            message.classList.remove("d-none");
+
+        }
+
+
+        function hideMessage() {
+
+            message.textContent = "";
+            message.className = "alert d-none";
+
+        }
+
+    </script>
+
+
+</body>
+
+</html>

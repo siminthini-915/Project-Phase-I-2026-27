@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Quizzes | EduCore</title>
+
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  >
+
+  <style>
+    body {
+      background: #f5f7fb;
+      color: #24304a;
+    }
+
+    .container {
+      max-width: 1000px;
+    }
+
+    .panel {
+      background: #fff;
+      border: 1px solid #e1e5ee;
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 22px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    }
+
+    .page-title {
+      font-weight: 750;
+    }
+
+    .section-title {
+      font-weight: 700;
+      font-size: 19px;
+    }
+
+    .form-control,
+    .form-select,
+    .btn {
+      border-radius: 9px;
+    }
+
+    .form-control,
+    .form-select {
+      padding: 10px 12px;
+    }
+
+    .muted {
+      color: #6c757d;
+      font-size: 13px;
+    }
+
+    .question-card,
+    .quiz-card {
+      border: 1px solid #e1e5ee;
+      border-radius: 12px;
+      padding: 18px;
+      margin-top: 16px;
+      background: #fff;
+    }
+
+    .question-card {
+      background: #fbfcff;
+    }
+
+    #message:empty {
+      display: none;
+    }
+
+    @media (max-width: 576px) {
+      .panel {
+        padding: 17px;
+      }
+    }
+    .question-text {
+  min-height: 90px;
+  height: 90px;
+  resize: none;
+  overflow: hidden;
+}
+  </style>
+</head>
+
+<body>
+  <main class="container py-4">
+    <a href="admin-dashboard.html" class="btn btn-outline-secondary mb-3">
+      &larr; Admin Dashboard
+    </a>
+
+    <h2 class="page-title">Manage Quizzes</h2>
+    <p class="text-secondary">
+      Create quizzes for a course by adding questions and options manually.
+    </p>
+
+    <div id="message" aria-live="polite"></div>
+
+    <section class="panel">
+      <h3 class="section-title">Create a Quiz</h3>
+      <p class="muted mb-4">
+        Each student can attempt a quiz only once. Check every question and
+        correct answer before publishing.
+      </p>
+
+      <form id="quizForm" hidden>
+        <div class="mb-3">
+          <label for="courseSelect" class="form-label">Course</label>
+          <select id="courseSelect" class="form-select" required>
+            <option value="">Loading courses...</option>
+          </select>
+          <div class="muted mt-1">
+            Select the course this quiz belongs to.
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="quizTitle" class="form-label">Quiz Title</label>
+          <input
+            type="text"
+            id="quizTitle"
+            class="form-control"
+            maxlength="150"
+            required
+            placeholder="Example: Cloud Computing Quiz"
+          >
+        </div>
+<div class="mb-3" id="quizTopicGroup">
+  <label for="quizTopic" class="form-label">Quiz Topic</label>
+  <input
+    type="text"
+    id="quizTopic"
+    class="form-control"
+    maxlength="150"
+    required
+    placeholder="Example: Virtualization"
+  >
+  <div class="muted mt-1">
+    This topic will apply to every question in the quiz.
+  </div>
+</div>
+<div class="mb-3">
+  <label for="quizDeadline" class="form-label">
+    Quiz Deadline (Date & Time)
+  </label>
+  <input
+    type="datetime-local"
+    id="quizDeadline"
+    class="form-control"
+    
+  >
+  <div class="muted mt-1">
+    Students can attempt this quiz until the selected date and time.
+  </div>
+</div>
+
+        <div class="row g-3 mb-4">
+          <div class="col-12 col-sm-6">
+            <label for="marksPerQuestion" class="form-label">
+              Marks per Question
+            </label>
+            <input
+              type="number"
+              id="marksPerQuestion"
+              class="form-control"
+              min="1"
+              max="100"
+              step="1"
+              value="1"
+              required
+            >
+          </div>
+
+          <div class="col-12 col-sm-6">
+            <label for="questionCountDisplay" class="form-label">
+              Total Questions (10–50)
+            </label>
+            <input
+              type="number"
+              id="questionCountDisplay"
+              class="form-control"
+              min="10"
+              max="50"
+              step="1"
+              value="10"
+              required
+            >
+          </div>
+        </div>
+<hr class="my-4">
+
+<h4 class="section-title mb-0">Questions</h4>
+
+<p class="muted mt-2 mb-3">
+  Enter four options and select the correct answer for every question.
+  A quiz must contain at least 10 and at most 50 questions.
+</p>
+
+<div id="questionsContainer"></div>
+<div class="d-flex justify-content-between align-items-center mt-4">
+  <button type="submit" id="publishBtn" class="btn btn-primary">
+    Publish Quiz
+  </button>
+
+  <button type="button" id="addQuestionBtn" class="btn btn-outline-primary">
+    + Add Next Question
+  </button>
+</div>
+
+      </form>
+    </section>
+
+  </main>
+
+  <script type="module">
+    import { auth, db } from "./firebase.js";
+
+    import {
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js";
+
+    import {
+  collection,
+  addDoc,
+  getDoc,
+  getDocs,
+  doc,
+  serverTimestamp,
+  writeBatch,
+  updateDoc
+} from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
+
+    const $ = id => document.getElementById(id);
+
+    const quizForm = $("quizForm");
+    const messageEl = $("message");
+    const questionsContainer = $("questionsContainer");
+    const publishBtn = $("publishBtn");
+
+    let authorized = false;
+let availableCourses = [];
+let questionNumber = 0;
+let editingQuizId = new URLSearchParams(location.search).get("edit");
+let editingQuizVersion = 1;
+
+    function showMessage(message, type = "danger") {
+      messageEl.replaceChildren();
+
+      const alert = document.createElement("div");
+      alert.className = `alert alert-${type}`;
+      alert.textContent = message;
+
+      messageEl.appendChild(alert);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function clearMessage() {
+      messageEl.replaceChildren();
+    }
+
+    function getSelectedCourse() {
+      return availableCourses.find(
+        course => course.id === $("courseSelect").value
+      );
+    }
+
+    
+    function updateQuestionCount() {
+  const count =
+    questionsContainer.querySelectorAll(".question-card").length;
+
+  const selectedCount =
+    Number.parseInt($("questionCountDisplay").value, 10) || 10;
+
+  $("addQuestionBtn").disabled = count >= selectedCount;
+
+  $("addQuestionBtn").textContent =
+    count >= selectedCount
+      ? "All Questions Added"
+      : "+ Add Next Question";
+}
+
+    function addQuestionCard(skipValidation = false) {
+      const currentCount =
+        questionsContainer.querySelectorAll(".question-card").length;
+const selectedCount =
+  Number.parseInt($("questionCountDisplay").value, 10) || 10;
+
+if (currentCount >= selectedCount) {
+  showMessage(`You selected ${selectedCount} questions.`, "warning");
+  return;
+}
+
+if (!skipValidation && currentCount > 0) {
+  const cards = questionsContainer.querySelectorAll(".question-card");
+  const currentCard = cards[cards.length - 1];
+
+  const requiredFields = currentCard.querySelectorAll("[required]");
+
+  for (const field of requiredFields) {
+    if (!field.value.trim()) {
+      field.reportValidity();
+      showMessage("Please complete the current question first.", "warning");
+      return;
+    }
+  }
+}
+
+      questionNumber += 1;
+
+      const card = document.createElement("div");
+      card.className = "question-card";
+      card.dataset.questionNumber = String(questionNumber);
+
+      card.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+          <h5 class="fw-bold mb-0 question-heading">
+            Question ${questionNumber}
+          </h5>
+
+          <button type="button" class="btn btn-outline-danger btn-sm remove-question-btn">
+            Remove
+          </button>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Question Text</label>
+          <textarea
+            class="form-control question-text"
+            rows="2"
+            maxlength="1000"
+            required
+            placeholder="Enter the question"
+          ></textarea>
+        </div>
+
+
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <label class="form-label">Option A</label>
+            <input type="text" class="form-control question-option" maxlength="500" required>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label">Option B</label>
+            <input type="text" class="form-control question-option" maxlength="500" required>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label">Option C</label>
+            <input type="text" class="form-control question-option" maxlength="500" required>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label">Option D</label>
+            <input type="text" class="form-control question-option" maxlength="500" required>
+          </div>
+        </div>
+
+        <div class="mt-3">
+          <label class="form-label">Correct Answer</label>
+          <select class="form-select correct-answer" required>
+            <option value="">Select the correct option</option>
+            <option value="0">Option A</option>
+            <option value="1">Option B</option>
+            <option value="2">Option C</option>
+            <option value="3">Option D</option>
+          </select>
+        </div>
+      `;
+
+      card.querySelector(".remove-question-btn").addEventListener("click", () => {
+        const count =
+          questionsContainer.querySelectorAll(".question-card").length;
+
+        if (count <= 10) {
+          showMessage("A quiz must contain at least 10 questions.", "warning");
+          return;
+        }
+
+        card.remove();
+        renumberQuestions();
+        updateQuestionCount();
+        clearMessage();
+      });
+      questionsContainer.appendChild(card);
+      card.scrollIntoView({
+  behavior: "smooth",
+  block: "end"
+});
+
+    
+      renumberQuestions();
+      updateQuestionCount();
+    }
+
+    function renumberQuestions() {
+      questionsContainer
+        .querySelectorAll(".question-card")
+        .forEach((card, index) => {
+          card.querySelector(".question-heading").textContent =
+            `Question ${index + 1}`;
+        });
+    }
+function collectQuestions() {
+  const cards = [
+    ...questionsContainer.querySelectorAll(".question-card")
+  ];
+
+  return cards.map((card, index) => {
+    const text = card.querySelector(".question-text").value.trim();
+
+    const options = [
+      ...card.querySelectorAll(".question-option")
+    ].map(input => input.value.trim());
+
+    const correctValue = card.querySelector(".correct-answer").value;
+
+    if (!text || options.some(option => !option)) {
+      throw new Error(
+        `Please complete the question and all four options for Question ${index + 1}.`
+      );
+    }
+
+    if (!["0", "1", "2", "3"].includes(correctValue)) {
+      throw new Error(
+        `Please select the correct answer for Question ${index + 1}.`
+      );
+    }
+return {
+  text,
+  topic: $("quizTopic").value.trim(),
+  options,
+  correctIndex: Number(correctValue),
+  marks: Number($("marksPerQuestion").value)
+};
+  });
+}
+
+    async function verifyAdmin(user) {
+      if (!user) return false;
+
+      const userSnap = await getDoc(doc(db, "users", user.uid));
+
+      return userSnap.exists() &&
+        String(userSnap.data().role || "").trim().toLowerCase() === "admin";
+    }
+
+    onAuthStateChanged(auth, async user => {
+      if (!user) {
+        location.href = "login.html";
+        return;
+      }
+
+      quizForm.hidden = true;
+
+      try {
+        authorized = await verifyAdmin(user);
+
+        if (!authorized) {
+          showMessage("Admin access only.");
+          return;
+        }
+
+        quizForm.hidden = false;
+        await loadCourses();
+
+        if (editingQuizId) {
+  await loadQuizForEditing();
+} else {
+  questionsContainer.replaceChildren();
+  questionNumber = 0;
+  addQuestionCard(true);
+  
+}
+    
+      } catch (error) {
+        console.error("Admin initialization error:", error);
+        showMessage(
+          "Could not open quiz management. Check your Firestore rules and internet connection."
+        );
+      }
+    });
+
+    async function loadCourses() {
+      const courseSelect = $("courseSelect");
+      courseSelect.innerHTML = '<option value="">Loading courses...</option>';
+
+      const snapshot = await getDocs(collection(db, "courses"));
+
+      availableCourses = snapshot.docs.map(item => ({
+        id: item.id,
+        ...item.data()
+      }));
+
+      availableCourses.sort((a, b) =>
+        String(a.name || a.title || "").localeCompare(
+          String(b.name || b.title || "")
+        )
+      );
+
+      const activeCourses = availableCourses.filter(course =>
+        !course.status ||
+        String(course.status).toLowerCase() === "active"
+      );
+
+      courseSelect.innerHTML = '<option value="">Select a course</option>';
+
+      activeCourses.forEach(course => {
+        const option = document.createElement("option");
+        option.value = course.id;
+        option.textContent = course.name || course.title || "Untitled Course";
+        courseSelect.appendChild(option);
+      });
+
+      if (activeCourses.length === 0) {
+        courseSelect.innerHTML =
+          '<option value="">No active courses available</option>';
+
+        showMessage(
+          "No active courses found. Add or activate a course before creating a quiz.",
+          "warning"
+        );
+      }
+    }
+
+    async function loadQuizForEditing() {
+  const quizRef = doc(db, "quizzes", editingQuizId);
+  const quizSnap = await getDoc(quizRef);
+
+  if (!quizSnap.exists()) {
+    throw new Error("Quiz not found.");
+  }
+
+  const quiz = quizSnap.data();
+  editingQuizVersion = quiz.version || 1;
+
+  $("quizTitle").value = quiz.title || "";
+  $("quizTopic").value = quiz.topic || quiz.questions?.[0]?.topic || "";
+  $("quizDeadline").value = quiz.deadline
+  ? (quiz.deadline.length === 10
+      ? quiz.deadline + "T23:59"
+      : quiz.deadline)
+  : "";
+  $("courseSelect").value = quiz.courseId || "";
+  $("marksPerQuestion").value = quiz.marksPerQuestion || 1;
+  $("questionCountDisplay").value = quiz.questionCount || quiz.questions.length;
+
+
+  questionsContainer.replaceChildren();
+  questionNumber = 0;
+
+  quiz.questions.forEach(question => {
+    addQuestionCard();
+
+    const card = questionsContainer.lastElementChild;
+
+    card.querySelector(".question-text").value = question.text || "";
+    
+
+    card.querySelectorAll(".question-option").forEach((input, index) => {
+      input.value = question.options?.[index] || "";
+    });
+
+    card.querySelector(".correct-answer").value =
+      String(question.correctIndex ?? "");
+  });
+
+  
+  updateQuestionCount();
+
+  $("publishBtn").textContent = "Republish Quiz";
+  document.querySelector(".section-title").textContent = "Edit Quiz";
+}
+
+
+    $("addQuestionBtn").addEventListener("click", () => {
+      clearMessage();
+      addQuestionCard();
+    });$("questionCountDisplay").addEventListener("change", () => {
+  const countInput = $("questionCountDisplay");
+
+  const desiredCount = Math.max(
+    10,
+    Math.min(50, Number.parseInt(countInput.value, 10) || 10)
+  );
+
+  countInput.value = String(desiredCount);
+
+  const currentCount =
+    questionsContainer.querySelectorAll(".question-card").length;
+
+  if (currentCount === 0) {
+    questionNumber = 0;
+    addQuestionCard();
+  }
+
+  updateQuestionCount();
+  clearMessage();
+});
+    async function sendQuizNotifications(courseId, quizTitle, courseName, isRepublished) {
+  const usersSnapshot = await getDocs(collection(db, "users"));
+
+  for (const userDoc of usersSnapshot.docs) {
+    if (userDoc.data().role !== "student") continue;
+
+    const enrollmentsSnapshot = await getDocs(
+      collection(db, "users", userDoc.id, "enrollments")
+    );
+
+    const isEnrolled = enrollmentsSnapshot.docs.some(
+      enrollment => enrollment.data().courseId === courseId
+    );
+
+    if (!isEnrolled) continue;
+
+    await addDoc(
+      collection(db, "users", userDoc.id, "notifications"),
+      {
+        title: isRepublished ? "Quiz Republished" : "New Quiz Published",
+message: isRepublished
+  ? `The quiz "${quizTitle}" in ${courseName} has been republished. Check it out!`
+  : `A new quiz "${quizTitle}" is published in ${courseName}. Attempt it now!`,
+        type: "quiz",
+        courseId,
+        createdAt: serverTimestamp(),
+        read: false
+      }
+    );
+  }
+}
+    quizForm.addEventListener("submit", async event => {
+      event.preventDefault();
+      clearMessage();
+
+      if (!authorized || !auth.currentUser) {
+        showMessage("Admin access only.");
+        return;
+      }
+
+      publishBtn.disabled = true;
+      publishBtn.textContent = "Publishing...";
+
+      try {
+        const isAdmin = await verifyAdmin(auth.currentUser);
+
+        if (!isAdmin) {
+          authorized = false;
+          showMessage("Admin access only.");
+          return;
+        }const title = $("quizTitle").value.trim();
+const topic = $("quizTopic").value.trim();
+const deadline = $("quizDeadline").value;
+
+const course = getSelectedCourse();
+        const marksPerQuestion = Number($("marksPerQuestion").value);
+if (!title || !topic || !course) {
+  throw new Error(
+    "Enter the quiz title, topic, and select a course."
+  );
+}
+
+if (deadline && (
+  Number.isNaN(new Date(deadline).getTime()) ||
+  new Date(deadline).getTime() <= Date.now()
+)) {
+  throw new Error("Please select a valid future deadline.");
+}
+
+        if (
+          !Number.isInteger(marksPerQuestion) ||
+          marksPerQuestion < 1 ||
+          marksPerQuestion > 100
+        ) {
+          throw new Error("Marks per question must be a whole number from 1 to 100.");
+        }
+const selectedCount =
+  Number.parseInt($("questionCountDisplay").value, 10) || 10;
+
+const addedCount =
+  questionsContainer.querySelectorAll(".question-card").length;
+
+if (addedCount !== selectedCount) {
+  throw new Error(
+    `Please add all ${selectedCount} questions. ${addedCount} questions added.`
+  );
+}
+        const questions = collectQuestions();
+
+        if (questions.length < 10 || questions.length > 50) {
+          throw new Error("A quiz must contain between 10 and 50 questions.");
+        }
+
+        const totalMarks = questions.length * marksPerQuestion;
+const quizData = {
+  title,
+  topic,
+  deadline,
+  courseId: course.id,
+  courseName: course.name || course.title || "Untitled Course",
+  questions,
+  questionCount: questions.length,
+  marksPerQuestion,
+  totalMarks,
+  published: true,
+  version: editingQuizId ? editingQuizVersion + 1 : 1,
+  updatedAt: serverTimestamp()
+};
+
+if (editingQuizId) {
+  await updateDoc(doc(db, "quizzes", editingQuizId), quizData);
+} else {
+  await addDoc(collection(db, "quizzes"), {
+    ...quizData,
+    createdBy: auth.currentUser.uid,
+    createdAt: serverTimestamp()
+  });
+}
+await sendQuizNotifications(
+  course.id,
+  title,
+  course.name || course.title || "Untitled Course",
+  Boolean(editingQuizId)
+);
+
+showMessage(
+  editingQuizId
+    ? `Quiz "${title}" was republished successfully.`
+    : `Quiz "${title}" was published successfully.`,
+  "success"
+);
+        if (!editingQuizId) {
+  quizForm.reset();
+  questionsContainer.replaceChildren();
+  questionNumber = 0;
+  addQuestionCard();
+
+  
+  $("marksPerQuestion").value = "1";
+}
+
+    
+      } catch (error) {
+        console.error("Quiz publishing error:", error);
+        showMessage(
+          error.message ||
+          "Could not publish the quiz. Check your Firestore rules and connection."
+        );
+      } finally {
+        publishBtn.disabled = false;
+        publishBtn.textContent = editingQuizId ? "Republish Quiz" : "Publish Quiz";
+      }
+    });
+    function downloadQuestionSheet(quiz, questions = quiz.questions) {
+  const lines = [
+    `EduCore - ${quiz.title || "Quiz"}`,
+    `Course: ${quiz.courseName || "Not specified"}`,
+    `Topic: ${quiz.topic || "Not specified"}`,
+    "",
+    "QUESTIONS AND OPTIONS",
+    
+    ""
+  ];
+questions.forEach((question, index) => {
+  lines.push(`${index + 1}. ${question.text || "Question"}`);
+
+  (question.options || []).forEach((option, optionIndex) => {
+    lines.push(`   ${String.fromCharCode(65 + optionIndex)}. ${option}`);
+  });
+
+  const correctOption = question.options?.[question.correctIndex];
+  lines.push(`   Correct Answer: ${correctOption || "Not specified"}`);
+  lines.push("");
+});
+  const blob = new Blob([lines.join("\n")], {
+    type: "text/plain;charset=utf-8"
+  });
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  const filename = (quiz.title || "quiz")
+    .replace(/[^a-z0-9-_ ]/gi, "")
+    .trim()
+    .replace(/\s+/g, "_") || "quiz";
+
+  link.href = url;
+  link.download = `${filename}_questions.txt`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+document.addEventListener("keydown", function(e) {
+  if (e.target.classList.contains("question-text") && e.key === "Enter") {
+    requestAnimationFrame(() => {
+      e.target.style.height = "auto";
+      e.target.style.height = e.target.scrollHeight + "px";
+    });
+  }
+});
+
+  </script>
+</body>
+</html>

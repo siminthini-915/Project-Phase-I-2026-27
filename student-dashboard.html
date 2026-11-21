@@ -1,0 +1,1590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduCore | Student Dashboard</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+
+  <style>
+    
+    :root {
+      --primary: #3659d9;
+      --primary-light: #edf1ff;
+      --sidebar: #17213d;
+      --page: #f5f7fc;
+      --text: #202b45;
+      --muted: #7c879e;
+      --border: #e9edf5;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--page);
+      color: var(--text);
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+    }
+
+    .sidebar {
+      width: 250px;
+      position: fixed;
+      inset: 0 auto 0 0;
+      background: var(--sidebar);
+      color: white;
+      padding: 25px 16px;
+      overflow-y: auto;
+      z-index: 1000;
+    }
+
+    .brand {
+      font-size: 25px;
+      font-weight: 800;
+      padding: 0 13px 30px;
+      letter-spacing: -.6px;
+    }
+
+    .brand span { color: #91a8ff; }
+
+    .nav-label {
+      color: #8995b1;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      padding: 10px 14px;
+    }
+
+    .side-link {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: #c5cde0;
+      padding: 13px 14px;
+      border-radius: 10px;
+      display: flex;
+      gap: 13px;
+      align-items: center;
+      text-align: left;
+      margin-bottom: 5px;
+      font-size: 14px;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .side-link i {
+      width: 18px;
+      text-align: center;
+    }
+
+    .side-link:hover,
+    .side-link.active {
+      background: #2c3b65;
+      color: white;
+    }
+
+    .side-link.active {
+      box-shadow: inset 3px 0 #91a8ff;
+    }
+
+    .main {
+      margin-left: 250px;
+      padding: 30px;
+      min-height: 100vh;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+      margin-bottom: 28px;
+    }
+
+    .eyebrow {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 5px;
+    }
+
+    h1 {
+      font-size: 27px;
+      font-weight: 750;
+      margin: 0;
+    }
+
+    h2 {
+      font-size: 20px;
+      font-weight: 750;
+    }
+
+    h3 {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .avatar {
+      width: 43px;
+      height: 43px;
+      border-radius: 14px;
+      background: var(--primary-light);
+      color: var(--primary);
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+    }
+
+    .panel {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 17px;
+      padding: 22px;
+      box-shadow: 0 5px 20px rgba(31, 48, 90, .035);
+      margin-bottom: 22px;
+    }
+
+    .welcome {
+      background: linear-gradient(120deg, #3659d9, #6379ec);
+      color: white;
+      border-radius: 20px;
+      padding: 28px;
+      margin-bottom: 24px;
+    }
+
+    .welcome p {
+      color: #e3e8ff;
+      margin: 8px 0 0;
+    }
+
+    .stat-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      height: 100%;
+    }
+
+    .stat-icon {
+      width: 43px;
+      height: 43px;
+      display: grid;
+      place-items: center;
+      border-radius: 13px;
+      background: var(--primary-light);
+      color: var(--primary);
+      margin-bottom: 17px;
+      font-size: 18px;
+    }
+
+    .stat-number {
+      font-size: 27px;
+      font-weight: 800;
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .course-card,
+    .quiz-card {
+      height: 100%;
+      border: 1px solid var(--border);
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      transition: transform .18s, box-shadow .18s;
+      overflow-wrap: anywhere;
+    }
+
+    .course-card:hover,
+    .quiz-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 24px rgba(31,48,90,.08);
+    }
+
+    .course-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: #edf1ff;
+      color: #3659d9;
+      font-size: 20px;
+      margin-bottom: 15px;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .section-view { display: none; }
+    .section-view.active { display: block; }
+
+    .btn-primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      border-radius: 9px;
+    }
+
+    .btn-outline-primary { border-radius: 9px; }
+
+    .form-control,
+    .form-select {
+      border-radius: 9px;
+      padding: 10px 12px;
+    }
+
+    .progress {
+      height: 7px;
+      background: #edf0f7;
+    }
+
+    .progress-bar { background: var(--primary); }
+
+    .option-label {
+      display: block;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin: 8px 0;
+      cursor: pointer;
+    }
+
+    .option-label:hover { background: #f7f8ff; }
+    .option-label input { margin-right: 8px; }
+
+    .empty-state {
+      text-align: center;
+      padding: 35px 15px;
+      color: var(--muted);
+    }
+
+    @media (max-width: 800px) {
+      .sidebar {
+        width: 75px;
+        padding: 20px 9px;
+      }
+
+      .brand {
+        font-size: 0;
+        padding: 0 10px 25px;
+      }
+
+      .brand span { font-size: 20px; }
+      .nav-label { display: none; }
+
+      .side-link {
+        justify-content: center;
+        padding: 14px 5px;
+        font-size: 0;
+      }
+
+      .side-link i { font-size: 17px; }
+
+      .main {
+        margin-left: 75px;
+        padding: 20px 14px;
+      }
+
+      h1 { font-size: 22px; }
+      .welcome { padding: 22px; }
+    }
+
+    @media (max-width: 480px) {
+      .main { padding: 15px 10px; }
+      .topbar { align-items: flex-start; }
+      .panel { padding: 16px; }
+    }
+    .notification-badge {
+  margin-left: auto;
+  background: white;
+  color: #ef4444;
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 21px;
+  height: 21px;
+  border-radius: 50px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+}
+
+.notification-badge:empty {
+  display: none;
+}
+
+  </style>
+</head>
+
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand">Edu<span>Core</span></div>
+
+    <div class="nav-label">Learning</div>
+
+    <button class="side-link active" data-view="dashboard">
+      <i class="fa-solid fa-house"></i> Dashboard
+    </button>
+
+    <button class="side-link" data-view="courses">
+      <i class="fa-solid fa-book-open"></i> My Courses
+    </button>
+
+    <button class="side-link" data-view="quizzes">
+      <i class="fa-solid fa-clipboard-question"></i> Quizzes
+    </button>
+
+    <div class="nav-label mt-3">More</div>
+<button class="side-link" data-view="announcements">
+  <i class="fa-solid fa-bullhorn"></i>
+  <span>Announcements</span>
+  <span id="notificationBadge" class="notification-badge">0</span>
+</button>
+<button class="side-link" data-view="doubts">
+  <i class="fa-solid fa-circle-question"></i> My Doubts
+</button>
+    <button class="side-link" data-view="profile">
+      <i class="fa-solid fa-user"></i> Profile
+    </button>
+
+    <button class="side-link mt-4" id="logoutBtn">
+      <i class="fa-solid fa-right-from-bracket"></i> Logout
+    </button>
+  </aside>
+
+  <main class="main">
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">STUDENT PORTAL</div>
+        <h1 id="pageTitle">Dashboard</h1>
+      </div>
+
+    
+    </header>
+
+    <!-- Dashboard: welcome, progress and available courses only -->
+    <section class="section-view active" id="view-dashboard">
+
+      <div class="welcome">
+        <div class="small mb-2">WELCOME BACK</div>
+        <h2 class="mb-0" style="font-size:26px">
+          Hello, <span id="welcomeName">Student</span>!
+        </h2>
+        <p>Continue learning and keep making progress.</p>
+      </div>
+
+      <div class="row g-3 mb-4">
+
+        <div class="col-6">
+          <div class="stat-card">
+            <div class="stat-icon">
+              <i class="fa-solid fa-book"></i>
+            </div>
+            <div class="stat-number" id="courseCount">0</div>
+            <div class="stat-label">Enrolled Courses</div>
+          </div>
+        </div>
+
+        <div class="col-6">
+          <div class="stat-card">
+            <div class="stat-icon">
+              <i class="fa-solid fa-chart-line"></i>
+            </div>
+            <div class="stat-number" id="progressAverage">0%</div>
+            <div class="stat-label">Average Learning Progress</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Available courses -->
+      <div class="panel">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+          <div>
+            <h2 class="mb-1">Available Courses</h2>
+            <div class="muted">Explore courses and enroll to start learning.</div>
+          </div>
+
+          <div style="min-width:220px;max-width:320px;width:100%">
+            <input
+              type="search"
+              class="form-control"
+              id="availableCourseSearch"
+              placeholder="Search courses..."
+              aria-label="Search available courses"
+            >
+          </div>
+        </div>
+
+        <div class="row g-3" id="availableCourses">
+          <div class="col-12">
+            <div class="empty-state">Loading available courses...</div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- My Courses: enrolled courses only -->
+    <section class="section-view" id="view-courses">
+      <div class="panel">
+        <h2>My Courses</h2>
+        <p class="muted">Only courses you have enrolled in appear here.</p>
+
+        <div class="row g-3" id="allCourses">
+          <div class="col-12">
+            <div class="empty-state">Loading your courses...</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quizzes stay inside this dashboard -->
+    <section class="section-view" id="view-quizzes">
+      <div class="panel">
+        <h2>Quizzes</h2>
+        <p class="muted">
+          Choose a published quiz, answer the questions and submit your attempt.
+        </p>
+
+        <div id="quizList" class="row g-3"></div>
+        <div id="quizArea" class="mt-3"></div>
+      </div>
+    </section>
+<!-- Announcements -->
+<section class="section-view" id="view-announcements">
+  <div class="panel">
+    <h2>Announcements</h2>
+    <p class="muted">Important updates from your learning team.</p>
+
+    <div id="announcementList" class="empty-state">
+      Loading notifications...
+    </div>
+  </div>
+</section><!-- My Doubts -->
+<section class="section-view" id="view-doubts">
+  <div class="panel">
+   <div class="d-flex justify-content-between align-items-center mb-2">
+  <h2 class="mb-0">My Doubts</h2>
+  <button class="btn btn-outline-primary btn-sm"
+          id="refreshDoubtsBtn">
+    <i class="fa-solid fa-rotate"></i> Refresh
+  </button>
+</div>
+    <p class="mut ed">
+      View your submitted questions and replies from your faculty.
+    </p>
+
+    <div id="myDoubtsList">
+      <div class="empty-state">Loading your doubts...</div>
+    </div>
+  </div>
+</section>
+    <!-- Profile -->
+    <section class="section-view" id="view-profile">
+      <div class="panel">
+        <div class="d-flex align-items-center gap-3 mb-4">
+          <div class="avatar" style="width:60px;height:60px" id="profileAvatar">S</div>
+
+          <div>
+            <h2 class="mb-1" id="profileName">Student</h2>
+            <div class="muted">Student account</div>
+          </div>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label muted">Full Name</label>
+            <div class="form-control bg-light" id="profileNameField">—</div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label muted">Email Address</label>
+            <div class="form-control bg-light" id="profileEmail">—</div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label muted">Role</label>
+            <div class="form-control bg-light">Student</div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label muted">Firebase User ID</label>
+            <div class="form-control bg-light text-break" id="profileUid">—</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script type="module">
+    import { auth, db } from "./firebase.js";
+
+    import {
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+    updateDoc,
+  deleteDoc,
+  addDoc,
+  query,
+  where,
+  orderBy,
+  limit,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
+
+    let currentUser = null;
+    let studentName = "Student";
+    let enrolledCourses = [];
+    let allAvailableCourses = [];
+    let enrolledCourseIds = new Set();
+    let publishedQuizzes = [];
+    let activeQuiz = null;
+    let quizAnswers = [];
+
+    const $ = id => document.getElementById(id);
+
+    const safe = value => String(value ?? "").replace(/[&<>"']/g, char => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    })[char]);
+
+    // -----------------------------
+    // Navigation
+    // -----------------------------
+  async function showView(name) {
+      if (name === "quizzes") {
+        location.href = "student-quizzes.html";
+        return;
+      }
+
+      document.querySelectorAll(".section-view").forEach(section => {
+        section.classList.toggle(
+          "active",
+          section.id === `view-${name}`
+        );
+      });
+
+      document.querySelectorAll(".side-link[data-view]").forEach(button => {
+        button.classList.toggle("active", button.dataset.view === name);
+      });
+
+      const titles = {
+        dashboard: "Dashboard",
+        courses: "My Courses",
+        quizzes: "Quizzes",
+        announcements: "Announcements",
+        doubts: "Ask Your Doubts",
+        profile: "My Profile"
+      };
+
+      $("pageTitle").textContent = titles[name] || "Dashboard";
+      if (name === "announcements") {
+  await markNotificationsAsRead();
+}
+if (name === "doubts") {
+  await loadMyDoubts();
+}
+
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    document.querySelectorAll(".side-link[data-view]").forEach(button => {
+      button.addEventListener("click", () => {
+        showView(button.dataset.view);
+      });
+    });
+
+    $("logoutBtn").addEventListener("click", async () => {
+      try {
+        await signOut(auth);
+        location.href = "login.html";
+      } catch (error) {
+        console.error("Logout error:", error);
+        alert("Could not log out. Please try again.");
+      }
+    });
+
+    // -----------------------------
+    // Authentication and profile
+    // -----------------------------
+    onAuthStateChanged(auth, async user => {
+      if (!user) {
+        location.href = "login.html";
+        return;
+      }
+
+      currentUser = user;
+
+      try {
+        const userSnap = await getDoc(doc(db, "users", user.uid));
+
+        if (!userSnap.exists() || userSnap.data().role !== "student") {
+          alert("Student access only.");
+          location.href = "login.html";
+          return;
+        }
+
+        const userData = userSnap.data();
+
+        studentName =
+          userData.name ||
+          user.displayName ||
+          user.email ||
+          "Student";
+
+      
+        $("welcomeName").textContent = studentName;
+        
+        $("profileAvatar").textContent = studentName.charAt(0).toUpperCase();
+        $("profileName").textContent = studentName;
+        $("profileNameField").textContent = studentName;
+        $("profileEmail").textContent = user.email || "—";
+        $("profileUid").textContent = user.uid;
+
+        await loadStudentData();
+
+      } catch (error) {
+        console.error("Dashboard loading error:", error);
+
+        alert(
+          "Could not load your dashboard. Check your Firestore rules and internet connection."
+        );
+      }
+    });
+    async function markNotificationsAsRead() {
+  const snapshot = await getDocs(
+    collection(db, "users", currentUser.uid, "notifications")
+  );
+
+  const unreadNotifications = snapshot.docs.filter(
+    item => item.data().read !== true
+  );
+
+  for (const item of unreadNotifications) {
+    await updateDoc(item.ref, { read: true });
+  }
+
+  const badge = $("notificationBadge");
+  if (badge) badge.textContent = "";
+}
+// -----------------------------
+// Load student notifications
+// -----------------------------
+async function loadNotifications() {
+  const announcementList = $("announcementList");
+
+  try {
+    const notificationsQuery = query(
+      collection(db, "users", currentUser.uid, "notifications"),
+      orderBy("createdAt", "desc"),
+      limit(20)
+    );
+
+    const snapshot = await getDocs(notificationsQuery);
+
+    const unreadCount = snapshot.docs.filter(
+      docSnap => docSnap.data().read !== true
+    ).length;
+
+    const badge = $("notificationBadge");
+
+    if (badge) {
+      badge.textContent = unreadCount > 0 ? unreadCount : "";
+    }
+
+    if (snapshot.empty) {
+      announcementList.innerHTML =
+        '<div class="empty-state">No new notifications yet.</div>';
+      return;
+    }
+
+    announcementList.innerHTML = snapshot.docs.map(docSnap => {
+      const notification = docSnap.data();
+      const isUnread = notification.read !== true;
+
+      const styles = {
+        quiz:   ["primary", "fa-clipboard-question"],
+        course: ["success", "fa-book-open"],
+        module: ["info", "fa-folder-open"],
+        video:  ["danger", "fa-video"],
+        pdf:    ["warning", "fa-file-pdf"],
+        text:   ["secondary", "fa-file-lines"]
+      };
+
+      const style = styles[notification.type] ||
+                    ["primary", "fa-bell"];
+
+      return `
+        <div class="card border-0 shadow-sm rounded-3 mb-3
+                    border-start border-4 border-${style[0]}
+                    ${isUnread ? "bg-light" : "bg-white"}">
+
+          <div class="card-body d-flex gap-3">
+
+            <div class="rounded-circle bg-${style[0]} bg-opacity-10
+                        text-${style[0]} p-3 align-self-start">
+              <i class="fa-solid ${style[1]} fs-5"></i>
+            </div>
+
+            <div class="flex-grow-1">
+
+              <div class="d-flex justify-content-between gap-2">
+                <h6 class="fw-bold mb-2">
+                  ${safe(notification.title || "New Update")}
+                </h6>
+
+              </div>
+
+              <p class="mb-2 text-secondary">
+                ${safe(notification.message || "")}
+              </p>
+
+              <small class="text-muted">
+                <i class="fa-regular fa-clock me-1"></i>
+                ${notification.createdAt?.toDate
+                  ? notification.createdAt.toDate().toLocaleString()
+                  : "Recently"}
+              </small>
+
+            </div>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+  } catch (error) {
+    console.error("Notification error:", error);
+    announcementList.innerHTML =
+      '<div class="empty-state">Could not load notifications.</div>';
+  }
+}
+
+async function editMyDoubt(doubtId, currentMessage) {
+  const updatedMessage = prompt("Edit your doubt:", currentMessage);
+
+  if (updatedMessage === null) return;
+
+  const trimmedMessage = updatedMessage.trim();
+
+  if (!trimmedMessage) {
+    alert("Doubt cannot be empty.");
+    return;
+  }
+
+  try {
+    await updateDoc(doc(db, "doubts", doubtId), {
+      message: trimmedMessage,
+      updatedAt: serverTimestamp()
+    });
+
+    alert("Doubt updated successfully.");
+    await loadMyDoubts();
+
+  } catch (error) {
+    console.error("Edit doubt error:", error);
+    alert("Could not update doubt. Please try again.");
+  }
+}
+
+async function deleteMyDoubt(doubtId) {
+  if (!confirm("Are you sure you want to delete this doubt?")) {
+    return;
+  }
+
+  try {
+    await deleteDoc(doc(db, "doubts", doubtId));
+
+    alert("Doubt deleted successfully.");
+    await loadMyDoubts();
+
+  } catch (error) {
+    console.error("Delete doubt error:", error);
+    alert("Could not delete doubt. Please try again.");
+  }
+}
+
+// -----------------------------
+// Load student's own doubts
+// -----------------------------
+
+async function loadMyDoubts() {
+  const container = $("myDoubtsList");
+
+  container.innerHTML =
+    '<div class="empty-state">Loading your doubts...</div>';
+
+  try {
+    const doubtsQuery = query(
+      collection(db, "doubts"),
+      where("studentId", "==", currentUser.uid)
+    );
+
+    const snapshot = await getDocs(doubtsQuery);
+
+    if (snapshot.empty) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <i class="fa-solid fa-circle-question fs-2 mb-3"></i>
+          <p>You have not submitted any doubts yet.</p>
+        </div>
+      `;
+      return;
+    }
+
+    const doubts = snapshot.docs
+      .map(item => ({ id: item.id, ...item.data() }))
+      .sort((a, b) =>
+        (b.createdAt?.toMillis?.() || 0) -
+        (a.createdAt?.toMillis?.() || 0)
+      );
+
+    container.innerHTML = doubts.map(doubt => `
+      <div class="card border-0 shadow-sm rounded-3 mb-3">
+        <div class="card-body">
+
+          <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+            <h5 class="fw-bold mb-0">
+              ${safe(doubt.courseName || "Course")}
+            </h5>
+
+            <span class="badge ${
+              doubt.status === "answered"
+                ? "text-bg-success"
+                : "text-bg-warning"
+            }">
+              ${doubt.status === "answered" ? "Answered" : "Pending"}
+            </span>
+          </div>
+
+          <p class="muted mb-3">
+            Lesson: ${safe(doubt.lessonTitle || "—")}
+          </p>
+
+          <div class="p-3 rounded-3 bg-light mb-3">
+            <strong>Your Doubt:</strong>
+            <p class="mb-0 mt-1">${safe(doubt.message)}</p>
+          </div>
+
+          ${
+            doubt.facultyReply
+              ? `
+                <div class="p-3 rounded-3 mb-3"
+                     style="background:#edf1ff">
+                  <strong>
+                    <i class="fa-solid fa-reply me-1"></i>
+                    Faculty Reply
+                  </strong>
+                  <p class="mb-0 mt-1">
+                    ${safe(doubt.facultyReply)}
+                  </p>
+                </div>
+              `
+              : `
+                <p class="text-muted small mb-3">
+                  <i class="fa-regular fa-clock me-1"></i>
+                  Waiting for faculty reply.
+                </p>
+              `
+          }
+
+          <button
+            type="button"
+            class="btn btn-outline-primary btn-sm me-2"
+            data-edit-doubt="${safe(doubt.id)}">
+            <i class="fa-solid fa-pen me-1"></i> Edit
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-outline-danger btn-sm"
+            data-delete-doubt="${safe(doubt.id)}">
+            <i class="fa-solid fa-trash me-1"></i> Delete
+          </button>
+
+        </div>
+      </div>
+    `).join("");
+
+    container.querySelectorAll("[data-edit-doubt]").forEach(button => {
+      button.addEventListener("click", () => {
+        const doubt = doubts.find(
+          item => item.id === button.dataset.editDoubt
+        );
+
+        if (doubt) {
+          editMyDoubt(doubt.id, doubt.message || "");
+        }
+      });
+    });
+
+    container.querySelectorAll("[data-delete-doubt]").forEach(button => {
+      button.addEventListener("click", () => {
+        deleteMyDoubt(button.dataset.deleteDoubt);
+      });
+    });
+
+  } catch (error) {
+    console.error("My Doubts loading error:", error);
+    container.innerHTML =
+      '<div class="empty-state">Could not load your doubts.</div>';
+  }
+}
+
+$("refreshDoubtsBtn").addEventListener("click", async () => {
+  const btn = $("refreshDoubtsBtn");
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Refreshing...';
+
+  await loadMyDoubts();
+
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fa-solid fa-rotate"></i> Refresh';
+});
+    // -----------------------------
+    // Load courses and enrollments
+    // -----------------------------
+    
+    async function loadStudentData() {
+      const enrollmentSnapshot = await getDocs(
+        collection(db, "users", currentUser.uid, "enrollments")
+      );
+
+      const enrollmentMap = new Map();
+
+      enrollmentSnapshot.forEach(item => {
+        enrollmentMap.set(item.id, item.data());
+      });
+
+      enrolledCourseIds = new Set(enrollmentMap.keys());
+
+      const courseSnapshot = await getDocs(
+        collection(db, "courses")
+      );
+
+      allAvailableCourses = courseSnapshot.docs
+        .map(item => ({
+          id: item.id,
+          ...item.data()
+        }))
+        .filter(course => {
+          return !course.status || course.status === "active";
+        });
+
+      enrolledCourses = allAvailableCourses
+        .filter(course => enrolledCourseIds.has(course.id))
+        .map(course => {
+          const enrollment = enrollmentMap.get(course.id) || {};
+
+          return {
+            ...course,
+            progress: Math.max(
+              0,
+              Math.min(100, Number(enrollment.progress) || 0)
+            )
+          };
+        });
+
+      const totalProgress = enrolledCourses.reduce(
+        (sum, course) => sum + course.progress,
+        0
+      );
+
+      $("courseCount").textContent = enrolledCourses.length;
+
+      $("progressAverage").textContent = enrolledCourses.length
+        ? Math.round(totalProgress / enrolledCourses.length) + "%"
+        : "0%";
+
+      renderEnrolledCourses();
+      renderAvailableCourses();
+
+    await loadNotifications();
+    }
+
+    // -----------------------------
+    // Course card
+    // -----------------------------
+    function courseCard(course, isEnrolled = false) {
+      const title = course.name || course.title || "Untitled Course";
+      const description =
+        course.description || "Learn at your own pace.";
+
+      if (isEnrolled) {
+        return `
+          <div class="col-md-6 col-xl-4">
+            <div class="course-card">
+              <div class="course-icon">
+                <i class="fa-solid fa-book-open"></i>
+              </div>
+
+              <h3>${safe(title)}</h3>
+              <p class="muted">${safe(description)}</p>
+
+              <div class="d-flex justify-content-between muted mb-2">
+                <span>Progress</span>
+                <strong>${course.progress}%</strong>
+              </div>
+
+              <div class="progress mb-3">
+                <div
+                  class="progress-bar"
+                  style="width:${course.progress}%">
+                </div>
+              </div>
+
+              <a
+                class="btn btn-primary btn-sm w-100"
+                href="course-details.html?id=${encodeURIComponent(course.id)}">
+                Continue Learning
+              </a>
+            </div>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="col-md-6 col-xl-4">
+          <div class="course-card">
+            <div class="course-icon">
+              <i class="fa-solid fa-book-open"></i>
+            </div>
+
+            <h3>${safe(title)}</h3>
+            <p class="muted">${safe(description)}</p>
+
+            <button
+              type="button"
+              class="btn btn-primary btn-sm w-100"
+              data-enroll-course="${safe(course.id)}">
+              <i class="fa-solid fa-plus me-1"></i>
+              Enroll Now
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    // -----------------------------
+    // My Courses: enrolled only
+    // -----------------------------
+    function renderEnrolledCourses() {
+      const container = $("allCourses");
+
+      if (!enrolledCourses.length) {
+        container.innerHTML = `
+          <div class="col-12">
+            <div class="empty-state">
+              <i class="fa-solid fa-book-open fs-2 mb-3"></i>
+              <p>You have not enrolled in any courses yet.</p>
+              <button
+                type="button"
+                class="btn btn-outline-primary btn-sm"
+                id="browseAvailableCourses">
+                Browse Available Courses
+              </button>
+            </div>
+          </div>
+        `;
+
+        $("browseAvailableCourses")?.addEventListener("click", () => {
+          showView("dashboard");
+        });
+
+        return;
+      }
+
+      container.innerHTML = enrolledCourses
+        .map(course => courseCard(course, true))
+        .join("");
+    }
+
+    // -----------------------------
+    // Dashboard: available courses
+    // -----------------------------
+    function renderAvailableCourses() {
+      const container = $("availableCourses");
+
+      const search = (
+        $("availableCourseSearch")?.value || ""
+      ).trim().toLowerCase();
+
+      const availableCourses = allAvailableCourses.filter(course => {
+        const notEnrolled = !enrolledCourseIds.has(course.id);
+
+        const searchableText = `
+          ${course.name || course.title || ""}
+          ${course.description || ""}
+        `.toLowerCase();
+
+        return notEnrolled && searchableText.includes(search);
+      });
+
+      if (!availableCourses.length) {
+        container.innerHTML = `
+          <div class="col-12">
+            <div class="empty-state">
+              ${
+                allAvailableCourses.length === 0
+                  ? "No active courses are available right now."
+                  : "No available courses match your search."
+              }
+            </div>
+          </div>
+        `;
+
+        return;
+      }
+
+      container.innerHTML = availableCourses
+        .map(course => courseCard(course, false))
+        .join("");
+
+      container.querySelectorAll("[data-enroll-course]").forEach(button => {
+        button.addEventListener("click", () => {
+          enrollInCourse(button.dataset.enrollCourse, button);
+        });
+      });
+    }
+
+    // Search available courses
+    $("availableCourseSearch").addEventListener(
+      "input",
+      renderAvailableCourses
+    );
+
+    // -----------------------------
+    // Enroll in a course
+    // -----------------------------
+    
+async function enrollInCourse(courseId, button) {
+  if (!currentUser || enrolledCourseIds.has(courseId)) {
+    return;
+  }
+
+  const course = allAvailableCourses.find(
+    item => item.id === courseId
+  );
+
+  if (!course) {
+    alert("This course is no longer available.");
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = "Enrolling...";
+
+  try {
+    // EXISTING enrollment path - keep unchanged
+    const enrollmentRef = doc(
+      db,
+      "users",
+      currentUser.uid,
+      "enrollments",
+      courseId
+    );
+
+    const existingEnrollment = await getDoc(enrollmentRef);
+
+    if (!existingEnrollment.exists()) {
+      await setDoc(enrollmentRef, {
+        courseId: courseId,
+        enrolledAt: serverTimestamp(),
+        progress: 0
+      });
+    }
+
+    // NEW: top-level enrollment record for teacher
+    const teacherEnrollmentRef = doc(
+      db,
+      "enrollments",
+      `${courseId}_${currentUser.uid}`
+    );
+
+    await setDoc(teacherEnrollmentRef, {
+      courseId: courseId,
+      studentId: currentUser.uid,
+      studentName: studentName,
+      studentEmail: currentUser.email || "",
+      enrolledAt: serverTimestamp()
+    }, { merge: true });
+
+    enrolledCourseIds.add(courseId);
+
+    await loadStudentData();
+
+    alert("You have enrolled successfully!");
+
+  } catch (error) {
+    console.error("Enrollment error:", error);
+
+    alert("Enrollment failed. Check your Firestore rules.");
+
+    button.disabled = false;
+    button.innerHTML =
+      '<i class="fa-solid fa-plus me-1"></i> Enroll Now';
+  }
+}
+
+    // -----------------------------
+    // Load published quizzes
+    // -----------------------------
+    async function loadQuizzes() {
+      const quizSnapshot = await getDocs(
+        query(
+          collection(db, "quizzes"),
+          where("published", "==", true)
+        )
+      );
+
+      publishedQuizzes = quizSnapshot.docs.map(item => ({
+        id: item.id,
+        ...item.data()
+      }));
+
+      $("quizList").innerHTML = publishedQuizzes.map(quiz => `
+        <div class="col-md-6 col-xl-4">
+          <div class="quiz-card">
+            <div class="course-icon">
+              <i class="fa-solid fa-clipboard-question"></i>
+            </div>
+
+            <h3>${safe(quiz.title || "Untitled Quiz")}</h3>
+
+            <p class="muted">
+              ${(quiz.questions || []).length} questions
+            </p>
+
+            <button
+              type="button"
+              class="btn btn-primary btn-sm w-100"
+              data-start-quiz="${safe(quiz.id)}">
+              Start Quiz
+            </button>
+          </div>
+        </div>
+      `).join("") || `
+        <div class="col-12">
+          <div class="empty-state">
+            No published quizzes are available right now.
+          </div>
+        </div>
+      `;
+
+      document.querySelectorAll("[data-start-quiz]").forEach(button => {
+        button.addEventListener("click", () => {
+          startQuiz(button.dataset.startQuiz);
+        });
+      });
+    }
+
+    // -----------------------------
+    // Start quiz
+    // -----------------------------
+    async function startQuiz(quizId) {
+      activeQuiz = publishedQuizzes.find(
+        quiz => quiz.id === quizId
+      );
+
+      if (!activeQuiz) return;
+
+      try {
+        const existing = await getDocs(
+          query(
+            collection(db, "quizAttempts"),
+            where("studentId", "==", currentUser.uid),
+            where("quizId", "==", quizId)
+          )
+        );
+
+        if (!existing.empty) {
+          renderPreviousResult(activeQuiz, existing.docs[0].data());
+          showView("quizzes");
+          return;
+        }
+
+        quizAnswers = new Array(
+          (activeQuiz.questions || []).length
+        ).fill(null);
+
+        showView("quizzes");
+        renderQuizForm();
+
+      } catch (error) {
+        console.error("Quiz loading error:", error);
+        alert("Could not open this quiz. Check Firestore rules.");
+      }
+    }
+
+    // -----------------------------
+    // Render quiz questions
+    // -----------------------------
+    function renderQuizForm() {
+      const questions = activeQuiz.questions || [];
+
+      $("quizArea").innerHTML = "";
+
+      if (!questions.length) {
+        $("quizArea").innerHTML = `
+          <div class="alert alert-warning">
+            This quiz has no questions.
+          </div>
+        `;
+        return;
+      }
+
+      $("quizArea").innerHTML = `
+        <div class="border rounded-4 p-3 p-md-4 mt-4">
+          <h2>${safe(activeQuiz.title)}</h2>
+          <p class="muted">Select one answer for each question.</p>
+
+          <form id="quizForm">
+            ${questions.map((question, index) => `
+              <div class="mb-4">
+                <h3>
+                  ${index + 1}. ${safe(question.text)}
+                </h3>
+
+                <div class="muted mb-2">
+                  Marks: ${Number(question.marks) || 1}
+                </div>
+
+                ${(question.options || []).map((option, optionIndex) => `
+                  <label class="option-label">
+                    <input
+                      type="radio"
+                      name="q${index}"
+                      value="${optionIndex}"
+                      required>
+                    ${safe(option)}
+                  </label>
+                `).join("")}
+              </div>
+            `).join("")}
+
+            <button class="btn btn-primary" type="submit">
+              Submit Quiz
+            </button>
+
+            <button
+              class="btn btn-outline-secondary ms-2"
+              type="button"
+              id="cancelQuiz">
+              Cancel
+            </button>
+          </form>
+        </div>
+      `;
+
+      $("quizForm").addEventListener("change", event => {
+        if (event.target.matches('input[type="radio"]')) {
+          const questionIndex = Number(
+            event.target.name.slice(1)
+          );
+
+          quizAnswers[questionIndex] = Number(
+            event.target.value
+          );
+        }
+      });
+
+      $("quizForm").addEventListener("submit", submitQuiz);
+
+      $("cancelQuiz").addEventListener("click", () => {
+        activeQuiz = null;
+        $("quizArea").innerHTML = "";
+      });
+    }
+
+    // -----------------------------
+    // Submit quiz and calculate score
+    // -----------------------------
+    async function submitQuiz(event) {
+      event.preventDefault();
+
+      if (!activeQuiz) return;
+
+      const questions = activeQuiz.questions || [];
+
+      const unanswered = quizAnswers.some(
+        answer => answer === null
+      );
+
+      if (unanswered) {
+        alert("Please answer every question before submitting.");
+        return;
+      }
+
+      const submitButton = $("quizForm").querySelector(
+        'button[type="submit"]'
+      );
+
+      submitButton.disabled = true;
+      submitButton.textContent = "Submitting...";
+
+      let score = 0;
+      let totalMarks = 0;
+
+      questions.forEach((question, index) => {
+        const marks = Number(question.marks) || 1;
+        totalMarks += marks;
+
+        if (
+          quizAnswers[index] === Number(question.correctIndex)
+        ) {
+          score += marks;
+        }
+      });
+
+      const attempt = {
+        quizId: activeQuiz.id,
+        quizTitle: activeQuiz.title || "Untitled Quiz",
+        studentId: currentUser.uid,
+        studentName: studentName,
+        answers: [...quizAnswers],
+        score: score,
+        totalMarks: totalMarks,
+        submittedAt: serverTimestamp()
+      };
+
+      try {
+        const attemptRef = doc(
+          db,
+          "quizAttempts",
+          `${currentUser.uid}_${activeQuiz.id}`
+        );
+
+        await setDoc(attemptRef, attempt);
+
+        renderPreviousResult(activeQuiz, {
+          ...attempt,
+          submittedAt: new Date()
+        });
+
+      } catch (error) {
+        console.error("Quiz submission error:", error);
+
+        alert(
+          "Could not submit your quiz. Check your Firestore rules."
+        );
+
+        submitButton.disabled = false;
+        submitButton.textContent = "Submit Quiz";
+      }
+    }
+
+    // -----------------------------
+    // Show quiz result
+    // -----------------------------
+    function renderPreviousResult(quiz, attempt) {
+      const questions = quiz.questions || [];
+
+      const percent = attempt.totalMarks
+        ? Math.round(
+            (attempt.score / attempt.totalMarks) * 100
+          )
+        : 0;
+
+      $("quizArea").innerHTML = `
+        <div class="border rounded-4 p-3 p-md-4 mt-4">
+
+          <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+            <div>
+              <h2>${safe(quiz.title || attempt.quizTitle)}</h2>
+              <p class="muted">Your quiz result</p>
+            </div>
+
+            <div
+              class="text-center rounded-4 p-3"
+              style="background:#edf1ff;min-width:120px">
+
+              <div class="fw-bold fs-3">
+                ${attempt.score}/${attempt.totalMarks}
+              </div>
+
+              <div class="muted">${percent}% score</div>
+            </div>
+          </div>
+
+          <hr>
+
+          ${questions.map((question, index) => {
+            const selected = attempt.answers?.[index];
+            const correct = Number(question.correctIndex);
+
+            const isCorrect =
+              selected != null &&
+              Number(selected) === correct;
+
+            return `
+              <div
+                class="mb-4 p-3 rounded-3"
+                style="background:${isCorrect ? "#effaf4" : "#fff1f0"}">
+
+                <h3>
+                  ${index + 1}. ${safe(question.text)}
+                </h3>
+
+                <p class="mb-1">
+                  <strong>Your answer:</strong>
+                  ${
+                    selected == null
+                      ? "Not answered"
+                      : safe(question.options?.[selected] ?? "Unknown option")
+                  }
+                </p>
+
+                <p class="mb-1">
+                  <strong>Correct answer:</strong>
+                  ${safe(question.options?.[correct] ?? "Not available")}
+                </p>
+
+                <span class="badge ${
+                  isCorrect ? "text-bg-success" : "text-bg-danger"
+                }">
+                  ${isCorrect ? "Correct" : "Incorrect"}
+                </span>
+              </div>
+            `;
+          }).join("")}
+
+          <button
+            class="btn btn-outline-primary"
+            id="backToQuizzes">
+            Back to Quizzes
+          </button>
+        </div>
+      `;
+
+      $("backToQuizzes").addEventListener("click", () => {
+        activeQuiz = null;
+        $("quizArea").innerHTML = "";
+        showView("quizzes");
+      });
+    }
+  </script>
+
+</body>
+</html>

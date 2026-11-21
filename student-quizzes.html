@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Available Quizzes | EduCore</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background: #f5f7fb; color: #212529; }
+    .container { max-width: 1000px; }
+    .panel, .quiz-card {
+      background: #fff; border: 1px solid #e1e5ee; border-radius: 14px;
+      padding: 22px; box-shadow: 0 4px 15px rgba(0,0,0,.03);
+    }
+    .quiz-card { height: 100%; }
+    .page-title { font-weight: 750; }
+    .muted { color: #6c757d; font-size: 13px; }
+    #message:empty { display: none; }
+    @media (max-width: 576px) { .panel, .quiz-card { padding: 16px; } }
+  
+    /* EduCore consistent styling: scoped to this page only */
+    body.ec-consistent-page {
+      background: #f5f7fb;
+      color: #24304a;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 15px;
+    }
+    body.ec-consistent-page .ec-heading-bar,
+    body.ec-consistent-page .ec-section-heading {
+      display: block;
+      background: #24304a;
+      color: #ffffff;
+      padding: 12px 16px;
+      border-radius: 9px;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.4;
+      margin-bottom: 18px;
+    }
+    body.ec-consistent-page .quiz-card h5 {
+      color: #24304a;
+      font-family: Arial, Helvetica, sans-serif;
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+    body.ec-consistent-page .quiz-card p,
+    body.ec-consistent-page .panel p,
+    body.ec-consistent-page #message {
+      color: #495469;
+    }
+    body.ec-consistent-page .btn-primary {
+      background: #24304a;
+      border-color: #24304a;
+      border-radius: 8px;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 8px 14px;
+    }
+    body.ec-consistent-page .btn-primary:hover,
+    body.ec-consistent-page .btn-primary:focus {
+      background: #19243b;
+      border-color: #19243b;
+    }
+    body.ec-consistent-page .btn-outline-secondary {
+      background: #ffffff;
+      color: #24304a;
+      border: 1px solid #24304a;
+      border-radius: 8px;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    body.ec-consistent-page .btn-outline-secondary:hover,
+    body.ec-consistent-page .btn-outline-secondary:focus {
+      background: #edf1f7;
+      color: #19243b;
+      border-color: #24304a;
+    }
+</style>
+</head>
+<body class="ec-consistent-page">
+  <main class="container py-4">
+    <a href="student-dashboard.html" class="btn btn-outline-secondary mb-3">&larr; Student Dashboard</a>
+    <h2 class="page-title ec-heading-bar">Available Quizzes</h2>
+    <p class="text-secondary">Start each quiz once. After submission, use View Score to review your saved result.</p>
+    <div id="message" aria-live="polite"></div>
+    <section class="panel">
+      <h4 class="fw-bold mb-3 text-dark">Your Quizzes</h4>
+      <div id="quizList" class="row g-3"><p class="text-secondary">Loading quizzes...</p></div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { auth, db } from "./firebase.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js";
+    import {
+      collection, getDoc, getDocs, doc, query, where
+    } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
+
+    const $ = id => document.getElementById(id);
+    let currentUser = null;
+
+    function showMessage(text, type = "danger") {
+      const box = $("message");
+      box.replaceChildren();
+      const alert = document.createElement("div");
+      alert.className = `alert alert-${type}`;
+      alert.textContent = text;
+      box.appendChild(alert);
+    }
+
+    function questionMarks(question, quiz) {
+      const marks = Number(question.marks ?? quiz.marksPerQuestion ?? 1);
+      return Number.isFinite(marks) && marks > 0 ? marks : 1;
+    }
+
+    function totalMarks(quiz) {
+      return (quiz.questions || []).reduce((sum, question) => sum + questionMarks(question, quiz), 0);
+    }function isQuizExpired(quiz) {
+  if (!quiz.deadline) return false;
+
+  const deadline = new Date(quiz.deadline);
+
+  if (Number.isNaN(deadline.getTime())) return false;
+
+  return Date.now() >= deadline.getTime();
+}
+
+function formatDeadline(value) {
+  if (!value) return "Not specified";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return "Not specified";
+
+  return date.toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+}
+    async function loadQuizzes() {
+      const list = $("quizList");
+      list.replaceChildren();
+      const loading = document.createElement("p");
+      loading.className = "text-secondary";
+      loading.textContent = "Loading quizzes...";
+      list.appendChild(loading);
+
+      try {
+        const [
+  attemptSnapshot,
+  userEnrollmentSnapshot,
+  allEnrollmentSnapshot
+] = await Promise.all([
+  getDocs(query(
+    collection(db, "quizAttempts"),
+    where("studentId", "==", currentUser.uid)
+  )),
+  getDocs(collection(db, "users", currentUser.uid, "enrollments")),
+  getDocs(query(
+    collection(db, "enrollments"),
+    where("studentId", "==", currentUser.uid)
+  ))
+]);
+// Collect all courses enrolled by this student
+const enrolledCourseIds = new Set();
+
+userEnrollmentSnapshot.docs.forEach(item => {
+  enrolledCourseIds.add(item.id);
+});
+
+allEnrollmentSnapshot.docs.forEach(item => {
+  const enrollment = item.data();
+  if (enrollment.courseId) {
+    enrolledCourseIds.add(enrollment.courseId);
+  }
+});
+
+// Fetch published quizzes only from enrolled courses
+const quizSnapshots = await Promise.all(
+  [...enrolledCourseIds].map(courseId =>
+    getDocs(query(
+      collection(db, "quizzes"),
+      where("published", "==", true),
+      where("courseId", "==", courseId)
+    ))
+  )
+);
+
+const quizDocs = quizSnapshots.flatMap(snapshot => snapshot.docs);
+
+        const attemptsByQuiz = new Map();
+attemptSnapshot.docs.forEach(item => {
+  const attempt = { id: item.id, ...item.data() };
+  if (!attempt.quizId) return;
+
+  const version = attempt.version || 1;
+  const key = `${attempt.quizId}_${version}`;
+
+  const previous = attemptsByQuiz.get(key);
+  const time = attempt.submittedAt?.toMillis?.() || 0;
+  const previousTime = previous?.submittedAt?.toMillis?.() || 0;
+
+  if (!previous || time >= previousTime) {
+    attemptsByQuiz.set(key, attempt);
+  }
+});
+
+        const quizzes = quizDocs
+          .map(item => ({ id: item.id, ...item.data() }))
+          .filter(quiz =>
+  Array.isArray(quiz.questions) &&
+  quiz.questions.length > 0 &&
+  enrolledCourseIds.has(quiz.courseId)
+)
+          .sort((a, b) => String(a.title || "").localeCompare(String(b.title || "")));
+
+        list.replaceChildren();
+        if (!quizzes.length) {
+          const empty = document.createElement("p");
+          empty.className = "text-secondary mb-0";
+          empty.textContent = "No published quizzes are available yet.";
+          list.appendChild(empty);
+          return;
+        }
+
+        quizzes.forEach(quiz => {
+          const attempt = attemptsByQuiz.get(`${quiz.id}_${quiz.version || 1}`);
+          const column = document.createElement("div");
+          column.className = "col-12 col-md-6";
+          const card = document.createElement("div");
+          card.className = "quiz-card";
+
+          const title = document.createElement("h5");
+          title.className = "fw-bold";
+          title.textContent = quiz.title || "Untitled Quiz";
+
+          const course = document.createElement("p");
+          course.className = "mb-1";
+          course.textContent = `Course: ${quiz.courseName || "Not specified"}`;
+
+          const topic = document.createElement("p");
+          topic.className = "mb-1";
+          topic.textContent = `Topic: ${quiz.topic || "Not specified"}`;
+
+          const count = document.createElement("p");
+          count.className = "mb-1";
+          count.textContent = `Questions: ${quiz.questions.length}`;
+
+          const marks = document.createElement("p");
+          marks.className = "mb-3";
+          marks.textContent = `Total marks: ${totalMarks(quiz)}`;
+         const deadline = quiz.deadline
+  ? document.createElement("p")
+  : null;
+
+if (deadline) {
+  deadline.className = "mb-3";
+  deadline.textContent = `Deadline: ${formatDeadline(quiz.deadline)}`;
+}
+const expired = isQuizExpired(quiz);
+
+const action = document.createElement("a");
+action.className = attempt
+  ? "btn btn-outline-primary"
+  : expired
+    ? "btn btn-secondary disabled"
+    : "btn btn-primary";
+
+action.textContent = attempt
+  ? "View Score"
+  : expired
+    ? "Expired"
+    : "Start Quiz";
+
+if (!expired || attempt) {
+  action.href = `student-quiz.html?quizId=${encodeURIComponent(quiz.id)}`;
+} else {
+  action.removeAttribute("href");
+  action.setAttribute("aria-disabled", "true");
+}
+
+const status = document.createElement("span");
+status.className = attempt
+  ? "badge text-bg-success ms-2"
+  : expired
+    ? "badge text-bg-danger ms-2"
+    : "badge text-bg-secondary ms-2";
+
+status.textContent = attempt
+  ? "Attempted"
+  : expired
+    ? "Expired"
+    : "Not Attempted";
+card.append(title, course, topic, count, marks);
+
+if (deadline) {
+  card.appendChild(deadline);
+}
+
+card.append(action, status);
+          column.appendChild(card);
+          list.appendChild(column);
+        });
+      } catch (error) {
+        console.error("Could not load quizzes:", error);
+        list.replaceChildren();
+        showMessage("Could not load quizzes. Check Firestore rules and your internet connection.");
+      }
+    }
+
+    onAuthStateChanged(auth, async user => {
+      if (!user) {
+        location.href = "login.html";
+        return;
+      }
+      currentUser = user;
+      try {
+        const userSnap = await getDoc(doc(db, "users", user.uid));
+        if (!userSnap.exists() || String(userSnap.data().role || "").toLowerCase() !== "student") {
+          location.href = "login.html";
+          return;
+        }
+        await loadQuizzes();
+      } catch (error) {
+        console.error("Student quiz list initialization failed:", error);
+        showMessage("Could not open quizzes. Check your profile and Firestore rules.");
+      }
+    });
+  </script>
+</body>
+</html>
