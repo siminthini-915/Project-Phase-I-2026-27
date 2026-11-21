@@ -1,3 +1,4 @@
+
 # EduCore – Cloud-Based Learning Management System
 
 **Project Name:** EduCore (My LMS)  
@@ -273,3 +274,7 @@ Refer to the `documentation/` folder for the available documents.
 ---
 
 **EduCore – Making Online Learning and Course Management Easier.**
+
+# Project-Phase-I-2026-27
+All Students should upload Project related all doc and readme as well as requirenment .txt file  along with code and database
+
